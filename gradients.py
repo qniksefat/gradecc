@@ -35,8 +35,10 @@ from nilearn.connectome import ConnectivityMeasure
 # def load by fname
 
 def make_mat(subj: int, cond: str) -> np.array:
+    DATA_DIR = '../sub43data/'
     #todo cond {'rest', 'RLbaseline', 'RLlearning'}
     fname = 'sub-' + str(subj) + '_ses-01_task-' + cond + '_run-1_space-fsLR_den-91k_bold_timeseries.tsv'
+    fname = DATA_DIR + fname
     #todo can be ses-02 or 01
     data = pd.read_csv(fname, delimiter='\t')
     correlation_measure = ConnectivityMeasure(kind='correlation')
@@ -67,11 +69,15 @@ def load_atlas():
 
 import nibabel as nib
 
+# add dependencies to git repo: a conda is great
+
 def load_atlas_labels():
-    ATLAS_DIR = 'atlas/Schaefer2018_1000Parcels_7Networks/'
+    # fork read from a file on github
+    ATLAS_DIR = '../atlas/Schaefer2018_1000Parcels_7Networks/'
     surf_labels_lh = nib.freesurfer.read_annot(ATLAS_DIR + 'lh.Schaefer2018_1000Parcels_7Networks_order.annot')[0]
     surf_labels_rh = nib.freesurfer.read_annot(ATLAS_DIR + 'rh.Schaefer2018_1000Parcels_7Networks_order.annot')[0]
     
     surf_labels_rh[surf_labels_rh != 0] += 500  # different labels for lh and rh
     surf_labels = np.concatenate([surf_labels_lh, surf_labels_rh])
-    
+
+

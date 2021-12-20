@@ -1,2 +1,2 @@
-# gradients-rl-task
-Computing gradients in RL task
+# gradients-RL-task
+Computing brain macroscale gradients in a Reinforcement Learning motor task

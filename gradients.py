@@ -12,10 +12,10 @@
 class Subject:
     masked_regions = ['7Networks_RH_Cont_Cing_1', '7Networks_RH_Vis_33']
     
-    def __init__(self, number) -> None:
+    def __init__(self, number):
         self.number = number
 
-    def __str__(self) -> str:
+    def __str__(self):
         pass
 
     def load(self):
@@ -33,14 +33,29 @@ from nilearn.connectome import ConnectivityMeasure
 # make some classes
 
 # func: load by fname
-
-def make_mat(subj: int, cond: str) -> np.array:
-    DATA_DIR = '../sub43data/'
+def load_data(subj: int, cond: str) -> pd.DataFrame:
+    DATA_DIR = '~/Downloads/subjects/'
     #todo restrict cond {'rest', 'RLbaseline', 'RLlearning'}
-    fname = 'sub-' + str(subj) + '_ses-01_task-' + cond + '_run-1_space-fsLR_den-91k_bold_timeseries.tsv'
+
+    if subj < 10:
+        # handle 01, 02, ..., 09
+        try:
+            # handle run-1 and run-2
+            fname = 'sub-0' + str(subj) + '_ses-01_task-' + cond + '_run-1_space-fsLR_den-91k_bold_timeseries.tsv'
+        except:
+            fname = 'sub-0' + str(subj) + '_ses-01_task-' + cond + '_run-2_space-fsLR_den-91k_bold_timeseries.tsv'
+    else:
+        try:
+            fname = 'sub-' + str(subj) + '_ses-01_task-' + cond + '_run-1_space-fsLR_den-91k_bold_timeseries.tsv'
+        except:
+            fname = 'sub-' + str(subj) + '_ses-01_task-' + cond + '_run-2_space-fsLR_den-91k_bold_timeseries.tsv'
+
     fname = DATA_DIR + fname
     #todo ? can be ses-02 or 01
     data = pd.read_csv(fname, delimiter='\t')
+    return data
+
+def make_mat(data: pd.DataFrame) -> np.array:
     correlation_measure = ConnectivityMeasure(kind='correlation')
     corr_mat = correlation_measure.fit_transform([data.values])[0]
     return corr_mat
@@ -94,10 +109,11 @@ def load_atlas(timeseriesT):
 
     # should remove the regions not in the timeseriesT
     REMOVED_REGIONS = set(regions) - set(timeseriesT.columns.tolist())
+    # should first find their labels, then remove them
+    removed_labels = [regions.index(r) for r in REMOVED_REGIONS]
     for r in REMOVED_REGIONS:
         regions.remove(r)
     
-    removed_labels = [regions.index(r) for r in REMOVED_REGIONS]
     mask_removed = ~np.isin(surf_labels, removed_labels)
 
     return surf_labels, mask_removed
@@ -112,9 +128,13 @@ def make_gradients(subj: int, ref=None):
     # where should i put these:
     DIM_RED_APPROACH = 'pca'
 
-    corr_mat_rest = make_mat(subj=subj, cond='rest')
-    corr_mat_lrn = make_mat(subj=subj, cond='RLlearning')
-    corr_mat_baseline = make_mat(subj=subj, cond='RLbaseline')
+    #todo BAD SMELL
+    data_rs = load_data(subj=subj, cond='rest')
+    corr_mat_rest = make_mat(data_rs)
+    data_lrn = load_data(subj=subj, cond='RLlearning')
+    corr_mat_lrn = make_mat(data_lrn)
+    data_baseline = load_data(subj=subj, cond='RLbaseline')
+    corr_mat_baseline = make_mat(data_baseline)
 
     gm_ref = GradientMaps(random_state=0, approach=DIM_RED_APPROACH)
     gm_ref.fit(corr_mat_rest, sparsity=0.9)
@@ -129,20 +149,24 @@ def make_gradients(subj: int, ref=None):
 
 from brainspace.utils.parcellation import map_to_labels
 from brainspace.datasets import load_fsa5
-
+IMAGE_DIR = 'img/'
 
 #todo break func ? to what
-def plot_gradients(gm, surf_labels, mask_removed):
-    grad = map_to_labels(gm.gradients_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad2 = map_to_labels(gm.gradients_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
-    grad_aligned = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad2_aligned = map_to_labels(gm.aligned_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
+def plot_gradients(subj: int, gm, surf_labels, mask_removed):
+    # grad = map_to_labels(gm.gradients_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    # grad2 = map_to_labels(gm.gradients_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
+    # grad_aligned = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    # grad2_aligned = map_to_labels(gm.aligned_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
+
+    grad_aligned_rs = map_to_labels(gm.aligned_[0][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    grad_aligned_baseline = map_to_labels(gm.aligned_[1][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    grad_aligned_lrn = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+
 
     surf_lh, surf_rh = load_fsa5()
 
     # with brainspace plot_hemi
     
-    # ? func inside another func
     # with surfplot 
     from surfplot import Plot
     import sys
@@ -151,6 +175,7 @@ def plot_gradients(gm, surf_labels, mask_removed):
     if not sys.warnoptions:
         warnings.simplefilter("ignore")
 
+    # ? func inside another func
     def stack_surfplot(data_to_show, text_bar, color_map):
         p = Plot(surf_lh=surf_lh, surf_rh=surf_rh,
                 size=(1600, 300),
@@ -163,14 +188,27 @@ def plot_gradients(gm, surf_labels, mask_removed):
         )
 
         fig = p.build()
-        fig = p.render(offscreen=True)
         fig.show()
+        fig.savefig(IMAGE_DIR + text_bar)
 
 
-    texts = ['Schaefer\n1000', '1st grad', '1st grad aligned', '2nd grad', '2nd grad aligned']
-    data = [surf_labels, grad, grad_aligned, grad2, grad2_aligned]
-    color_maps = ['tab20', 'viridis_r', 'viridis_r', 'viridis_r', 'viridis_r']
+    texts = ['rs grad', 'baseline grad', 'learning grad']
+    data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn]
+    # fill in `vir` in size of len(data)
+    color_maps = ['viridis_r', 'viridis_r', 'viridis_r']
     z = zip(data, texts, color_maps)
 
     for data_to_show, text_bar, color_map in z:
-    stack_surfplot(data_to_show, text_bar, color_map)
+        stack_surfplot(data_to_show, 'sub' + str(subj) + ' - ' + text_bar, color_map)
+
+
+if __name__ == "__main__":
+    subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    17, 18, 42, 43, 44, 45, 46, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
+    31, 33, 35, 36, 38, 39, 40,]
+    # didn't work for these subjects: 41, 19
+    for s in subjects:
+        data_rs = load_data(subj=s, cond='rest')
+        surf_labels, mask_removed = load_atlas(data_rs)
+        gm = make_gradients(subj=s)
+        plot_gradients(s, gm, surf_labels, mask_removed)

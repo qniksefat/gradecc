@@ -122,11 +122,11 @@ def load_atlas(timeseriesT):
 from brainspace.gradient import GradientMaps
 
 #todo should become a class
-def make_gradients(subj: int, ref=None):
+def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
     # if ref is None, takes mean as ref
     
     # where should i put these:
-    DIM_RED_APPROACH = 'pca'
+    # DIM_RED_APPROACH = 'dm'
 
     #todo BAD SMELL
     data_rs = load_data(subj=subj, cond='rest')
@@ -146,10 +146,39 @@ def make_gradients(subj: int, ref=None):
     return gm_aligned
 
 
-
 from brainspace.utils.parcellation import map_to_labels
 from brainspace.datasets import load_fsa5
 IMAGE_DIR = 'img/'
+
+surf_lh, surf_rh = load_fsa5()
+
+# with brainspace plot_hemi
+
+# with surfplot 
+from surfplot import Plot
+import sys
+import warnings
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
+
+# ? func inside/outside another func
+def stack_surfplot(data_to_show, text_bar, color_map, not_save_fig=False):
+    p = Plot(surf_lh=surf_lh, surf_rh=surf_rh,
+            size=(1600, 300),
+            layout='row',
+            label_text=[text_bar]
+            )
+
+    p.add_layer(
+        data_to_show, cbar=True, cmap=color_map,  
+    )
+    fig = p.build()
+    if not_save_fig:
+        fig.show()
+    else:
+        fig.savefig(IMAGE_DIR + text_bar)
+
 
 #todo break func ? to what
 def plot_gradients(subj: int, gm, surf_labels, mask_removed):
@@ -161,36 +190,6 @@ def plot_gradients(subj: int, gm, surf_labels, mask_removed):
     grad_aligned_rs = map_to_labels(gm.aligned_[0][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_baseline = map_to_labels(gm.aligned_[1][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_lrn = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-
-
-    surf_lh, surf_rh = load_fsa5()
-
-    # with brainspace plot_hemi
-    
-    # with surfplot 
-    from surfplot import Plot
-    import sys
-    import warnings
-
-    if not sys.warnoptions:
-        warnings.simplefilter("ignore")
-
-    # ? func inside another func
-    def stack_surfplot(data_to_show, text_bar, color_map):
-        p = Plot(surf_lh=surf_lh, surf_rh=surf_rh,
-                size=(1600, 300),
-                layout='row',
-                label_text=[text_bar]
-                )
-
-        p.add_layer(
-            data_to_show, cbar=True, cmap=color_map,  
-        )
-
-        fig = p.build()
-        fig.show()
-        fig.savefig(IMAGE_DIR + text_bar)
-
 
     texts = ['rs grad', 'baseline grad', 'learning grad']
     data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn]
@@ -207,6 +206,7 @@ if __name__ == "__main__":
     17, 18, 42, 43, 44, 45, 46, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
     31, 33, 35, 36, 38, 39, 40,]
     # didn't work for these subjects: 41, 19
+    
     for s in subjects:
         data_rs = load_data(subj=s, cond='rest')
         surf_labels, mask_removed = load_atlas(data_rs)

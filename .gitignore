@@ -139,3 +139,6 @@ img/mean - learning grad - dm.png
 img/mean - learning grad.png
 img/mean - rs grad - dm.png
 img/mean - rs grad.png
+__pycache__/gradients.cpython-38.pyc
+.gitignore
+.DS_Store

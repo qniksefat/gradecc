@@ -1,30 +1,3 @@
-# subject
-# conditions:
-    # fnames
-# plot conn:
-    # respct to rs
-# plot brain:
-    # respct to rs
-    # with surfplot
-# grads
-
-
-class Subject:
-    masked_regions = ['7Networks_RH_Cont_Cing_1', '7Networks_RH_Vis_33']
-    
-    def __init__(self, number):
-        self.number = number
-
-    def __str__(self):
-        pass
-
-    def load(self):
-        self.fname = 'sub-' + str(self.number) + '_ses-01_task-RLbaseline_run-1_space-fsLR_den-91k_bold_timeseries.tsv'
-
- 
-###
-
-
 import numpy as np
 import pandas as pd
 from nilearn.connectome import ConnectivityMeasure

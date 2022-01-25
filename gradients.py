@@ -6,7 +6,7 @@ from nilearn.connectome import ConnectivityMeasure
 # make some classes
 
 # func: load by fname
-def load_data(subj: int, cond: str) -> pd.DataFrame:
+def load_data(subj: int, cond: str, epic=None) -> pd.DataFrame:
     DATA_DIR = '~/Downloads/subjects/'
     #todo restrict cond {'rest', 'RLbaseline', 'RLlearning'}
 
@@ -26,7 +26,22 @@ def load_data(subj: int, cond: str) -> pd.DataFrame:
     fname = DATA_DIR + fname
     #todo ? can be ses-02 or 01
     data = pd.read_csv(fname, delimiter='\t')
-    return data
+
+    # handle windowing
+    # real sizes: 297 219 609
+
+    # epic is early or late for `learning`    
+    if cond == 'RLlearning':
+        if epic == 'early':
+            data = data[:250]
+        if epic == 'late':
+            data = data[-250:]
+
+    window_size = 216
+    size = data.shape[0]
+    start_window = (size - window_size) // 2
+    return data[start_window:start_window + window_size]
+
 
 def make_mat(data: pd.DataFrame) -> np.array:
     correlation_measure = ConnectivityMeasure(kind='correlation')
@@ -109,11 +124,16 @@ def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
     data_baseline = load_data(subj=subj, cond='RLbaseline')
     corr_mat_baseline = make_mat(data_baseline)
 
+    data_lrn_early = load_data(subj=subj, cond='RLlearning', epic='early')
+    corr_mat_lrn_early = make_mat(data_lrn_early)
+    data_lrn_late = load_data(subj=subj, cond='RLlearning', epic='late')
+    corr_mat_lrn_late = make_mat(data_lrn_late)
+
     gm_ref = GradientMaps(random_state=0, approach=DIM_RED_APPROACH)
     gm_ref.fit(corr_mat_rest, sparsity=0.9)
 
     gm_aligned = GradientMaps(random_state=0, alignment="procrustes", approach=DIM_RED_APPROACH)
-    gm_aligned.fit([corr_mat_rest, corr_mat_baseline, corr_mat_lrn],
+    gm_aligned.fit([corr_mat_rest, corr_mat_baseline, corr_mat_lrn, corr_mat_lrn_early, corr_mat_lrn_late],
     reference=gm_ref.gradients_, sparsity=0.9)
 
     return gm_aligned
@@ -121,7 +141,7 @@ def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
 
 from brainspace.utils.parcellation import map_to_labels
 from brainspace.datasets import load_fsa5
-IMAGE_DIR = 'img/'
+IMAGE_DIR = '../grad_results/'
 
 surf_lh, surf_rh = load_fsa5()
 
@@ -163,11 +183,14 @@ def plot_gradients(subj: int, gm, surf_labels, mask_removed):
     grad_aligned_rs = map_to_labels(gm.aligned_[0][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_baseline = map_to_labels(gm.aligned_[1][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_lrn = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    grad_aligned_lrn_early = map_to_labels(gm.aligned_[3][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    grad_aligned_lrn_late = map_to_labels(gm.aligned_[4][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
+    # traverse over all gm.aligned_[] #
 
-    texts = ['rs grad', 'baseline grad', 'learning grad']
-    data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn]
+    texts = ['rs grad', 'baseline grad', 'learning grad', 'early learning grad', 'late learning grad']
+    data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn, grad_aligned_lrn_early, grad_aligned_lrn_late]
     # fill in `vir` in size of len(data)
-    color_maps = ['viridis_r', 'viridis_r', 'viridis_r']
+    color_maps = ['viridis_r', 'viridis_r', 'viridis_r', 'viridis_r', 'viridis_r']
     z = zip(data, texts, color_maps)
 
     for data_to_show, text_bar, color_map in z:
@@ -178,7 +201,7 @@ if __name__ == "__main__":
     subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     17, 18, 42, 43, 44, 45, 46, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
     31, 33, 35, 36, 38, 39, 40,]
-    # didn't work for these subjects: 41, 19
+    # excluded subjects: 41, 19, 32, 27, 34, 37
     
     for s in subjects:
         data_rs = load_data(subj=s, cond='rest')

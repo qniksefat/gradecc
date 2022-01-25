@@ -110,7 +110,7 @@ def load_atlas(timeseriesT):
 from brainspace.gradient import GradientMaps
 
 #todo should become a class
-def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
+def make_gradients(subj: int, DIM_RED_APPROACH='dm', gm_ref=None):
     # if ref is None, takes mean as ref
     
     # where should i put these:
@@ -129,8 +129,9 @@ def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
     data_lrn_late = load_data(subj=subj, cond='RLlearning', epic='late')
     corr_mat_lrn_late = make_mat(data_lrn_late)
 
-    gm_ref = GradientMaps(random_state=0, approach=DIM_RED_APPROACH)
-    gm_ref.fit(corr_mat_rest, sparsity=0.9)
+    if gm_ref is None:
+        gm_ref = GradientMaps(random_state=0, approach=DIM_RED_APPROACH)
+        gm_ref.fit(corr_mat_rest, sparsity=0.9)
 
     gm_aligned = GradientMaps(random_state=0, alignment="procrustes", approach=DIM_RED_APPROACH)
     gm_aligned.fit([corr_mat_rest, corr_mat_baseline, corr_mat_lrn, corr_mat_lrn_early, corr_mat_lrn_late],
@@ -139,18 +140,20 @@ def make_gradients(subj: int, DIM_RED_APPROACH='dm', ref=None):
     return gm_aligned
 
 
-from brainspace.utils.parcellation import map_to_labels
 from brainspace.datasets import load_fsa5
+from brainspace.utils.parcellation import map_to_labels
+
 IMAGE_DIR = '../grad_results/'
 
 surf_lh, surf_rh = load_fsa5()
 
 # with brainspace plot_hemi
 
-# with surfplot 
-from surfplot import Plot
 import sys
 import warnings
+
+# with surfplot 
+from surfplot import Plot
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -187,7 +190,7 @@ def plot_gradients(subj: int, gm, surf_labels, mask_removed):
     grad_aligned_lrn_late = map_to_labels(gm.aligned_[4][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     # traverse over all gm.aligned_[] #
 
-    texts = ['rs grad', 'baseline grad', 'learning grad', 'early learning grad', 'late learning grad']
+    texts = ['Rest grads', 'Baseline grads', 'Learning grads', 'Early learning grads', 'Late learning grads']
     data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn, grad_aligned_lrn_early, grad_aligned_lrn_late]
     # fill in `vir` in size of len(data)
     color_maps = ['viridis_r', 'viridis_r', 'viridis_r', 'viridis_r', 'viridis_r']

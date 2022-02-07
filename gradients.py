@@ -42,6 +42,10 @@ def load_data(subj: int, cond: str, epic=None) -> pd.DataFrame:
     start_window = (size - window_size) // 2
     return data[start_window:start_window + window_size]
 
+    #todo for baseline -> just remove the first 3 trs
+    #todo for resting -> last trs
+    #todo for learnint: early: 4toEND; late: last trs
+
 
 def make_mat(data: pd.DataFrame) -> np.array:
     correlation_measure = ConnectivityMeasure(kind='correlation')
@@ -110,11 +114,8 @@ def load_atlas(timeseriesT):
 from brainspace.gradient import GradientMaps
 
 #todo should become a class
-def make_gradients(subj: int, DIM_RED_APPROACH='dm', gm_ref=None):
+def make_gradients(subj: int, DIM_RED_APPROACH='pca', gm_ref=None):
     # if ref is None, takes mean as ref
-    
-    # where should i put these:
-    # DIM_RED_APPROACH = 'dm'
 
     #todo BAD SMELL
     data_rs = load_data(subj=subj, cond='rest')

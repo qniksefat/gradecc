@@ -5,10 +5,16 @@ from nilearn.connectome import ConnectivityMeasure
 #todo refactor
 # make some classes
 
+EPICS_FNAME = {'rest': 'rest', 'baseline': 'RLbaseline',
+'learning': 'RLlearning', 'early_learning': 'RLlearning', 'late_learning': 'RLlearning', 
+}
+
 # func: load by fname
-def load_data(subj: int, cond: str, epic=None) -> pd.DataFrame:
+def load_data(subj: int, epic: str) -> pd.DataFrame:
     DATA_DIR = '~/Downloads/subjects/'
-    #todo restrict cond {'rest', 'RLbaseline', 'RLlearning'}
+    #todo restrict epics to {'rest', 'RLbaseline', 'learning', 'early', 'late'}
+
+    cond = EPICS_FNAME[epic]
 
     if subj < 10:
         # handle 01, 02, ..., 09
@@ -29,17 +35,16 @@ def load_data(subj: int, cond: str, epic=None) -> pd.DataFrame:
 
     # handle windowing
     # real sizes: 297 219 609
-
-    # epic is early or late for `learning`    
-    if cond == 'RLlearning':
-        if epic == 'early':
-            data = data[:250]
-        if epic == 'late':
-            data = data[-250:]
-
     window_size = 216
-    size = data.shape[0]
-    start_window = (size - window_size) // 2
+    start_period = 3
+
+    if epic == 'rest' or epic == 'baseline' or epic == 'late_learning':
+        return data[-1 * window_size:]
+    elif epic == 'early_learning':
+        return data[start_period: start_period + window_size]
+    elif epic == 'learning':
+        return data[200: 200 + window_size]
+    
     return data[start_window:start_window + window_size]
 
     #todo for baseline -> just remove the first 3 trs
@@ -114,29 +119,39 @@ def load_atlas(timeseriesT):
 from brainspace.gradient import GradientMaps
 
 #todo should become a class
-def make_gradients(subj: int, DIM_RED_APPROACH='pca', gm_ref=None):
+def make_gradients(subj: int, epics=list(EPICS_FNAME.keys()), DIM_RED_APPROACH='pca', gm_ref=None):
     # if ref is None, takes mean as ref
 
-    #todo BAD SMELL
-    data_rs = load_data(subj=subj, cond='rest')
-    corr_mat_rest = make_mat(data_rs)
-    data_lrn = load_data(subj=subj, cond='RLlearning')
-    corr_mat_lrn = make_mat(data_lrn)
-    data_baseline = load_data(subj=subj, cond='RLbaseline')
-    corr_mat_baseline = make_mat(data_baseline)
+    #todo it's not epic specific
+    #todo variance ratio
 
-    data_lrn_early = load_data(subj=subj, cond='RLlearning', epic='early')
-    corr_mat_lrn_early = make_mat(data_lrn_early)
-    data_lrn_late = load_data(subj=subj, cond='RLlearning', epic='late')
-    corr_mat_lrn_late = make_mat(data_lrn_late)
+    data_epics = {epic: load_data(subj=subj, epic=epic) for epic in epics}
+    corr_matrices = {epic: make_mat(data_epics[epic]) for epic in epics}
+
+    # data_rs = load_data(subj=subj, epic='rest')
+    # corr_mat_rest = make_mat(data_rs)
+    # data_lrn = load_data(subj=subj, epic='learning')
+    # corr_mat_lrn = make_mat(data_lrn)
+    # data_baseline = load_data(subj=subj, epic='baseline')
+    # corr_mat_baseline = make_mat(data_baseline)
+    # data_lrn_early = load_data(subj=subj, epic='early_learning')
+    # corr_mat_lrn_early = make_mat(data_lrn_early)
+    # data_lrn_late = load_data(subj=subj, epic='late_learning')
+    # corr_mat_lrn_late = make_mat(data_lrn_late)
 
     if gm_ref is None:
+        REF_EPIC = 'rest'
         gm_ref = GradientMaps(random_state=0, approach=DIM_RED_APPROACH)
-        gm_ref.fit(corr_mat_rest, sparsity=0.9)
+        gm_ref.fit(corr_matrices[REF_EPIC], sparsity=0.9)
 
     gm_aligned = GradientMaps(random_state=0, alignment="procrustes", approach=DIM_RED_APPROACH)
-    gm_aligned.fit([corr_mat_rest, corr_mat_baseline, corr_mat_lrn, corr_mat_lrn_early, corr_mat_lrn_late],
-    reference=gm_ref.gradients_, sparsity=0.9)
+    # matrices = [corr_mat_rest, corr_mat_baseline, corr_mat_lrn, corr_mat_lrn_early, corr_mat_lrn_late]
+    matrices = [corr_matrices[epic] for epic in epics]
+
+    # removing rest and learning
+    del matrices[0], matrices[1]
+
+    gm_aligned.fit(matrices, reference=gm_ref.gradients_, sparsity=0.9)
 
     return gm_aligned
 
@@ -160,15 +175,16 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
 # ? func inside/outside another func
-def stack_surfplot(data_to_show, text_bar, color_map, not_save_fig=False):
+def stack_surfplot(data_to_show, text_bar, color_map, data_range, not_save_fig=False):
     p = Plot(surf_lh=surf_lh, surf_rh=surf_rh,
             size=(1600, 300),
             layout='row',
-            label_text=[text_bar]
+            label_text=[text_bar],
             )
 
+    #todo fix zero?
     p.add_layer(
-        data_to_show, cbar=True, cmap=color_map,  
+        data_to_show, cbar=True, cmap=color_map, color_range=data_range,
     )
     fig = p.build()
     if not_save_fig:
@@ -179,11 +195,6 @@ def stack_surfplot(data_to_show, text_bar, color_map, not_save_fig=False):
 
 #todo break func ? to what
 def plot_gradients(subj: int, gm, surf_labels, mask_removed):
-    # grad = map_to_labels(gm.gradients_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    # grad2 = map_to_labels(gm.gradients_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
-    # grad_aligned = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    # grad2_aligned = map_to_labels(gm.aligned_[2][:, 1], surf_labels, mask=mask_removed, fill=np.nan)
-
     grad_aligned_rs = map_to_labels(gm.aligned_[0][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_baseline = map_to_labels(gm.aligned_[1][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
     grad_aligned_lrn = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
@@ -194,7 +205,7 @@ def plot_gradients(subj: int, gm, surf_labels, mask_removed):
     texts = ['Rest grads', 'Baseline grads', 'Learning grads', 'Early learning grads', 'Late learning grads']
     data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn, grad_aligned_lrn_early, grad_aligned_lrn_late]
     # fill in `vir` in size of len(data)
-    color_maps = ['viridis_r', 'viridis_r', 'viridis_r', 'viridis_r', 'viridis_r']
+    color_maps = ['seismic', 'seismic', 'seismic', 'seismic', 'seismic']
     z = zip(data, texts, color_maps)
 
     for data_to_show, text_bar, color_map in z:
@@ -208,7 +219,7 @@ if __name__ == "__main__":
     # excluded subjects: 41, 19, 32, 27, 34, 37
     
     for s in subjects:
-        data_rs = load_data(subj=s, cond='rest')
+        data_rs = load_data(subj=s, epic='rest')
         surf_labels, mask_removed = load_atlas(data_rs)
         gm = make_gradients(subj=s)
         plot_gradients(s, gm, surf_labels, mask_removed)

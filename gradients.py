@@ -85,7 +85,7 @@ import nibabel as nib
 
 # OK, we make a HUGE shitty function and
 #todo break func `load_atlas` later
-def load_atlas(timeseriesT):
+def load_atlas1(timeseriesT):
     # fork read from a file on github: Schaefer et al. 2018
     ATLAS_DIR = '../atlas/Schaefer2018_1000Parcels_7Networks/'
 
@@ -116,6 +116,13 @@ def load_atlas(timeseriesT):
     return surf_labels, mask_removed
 
 
+def load_atlas(filename='Schaefer2018_1000Parcels_7Networks_order.dlabel.nii'):
+    vertices = nib.load(filename).get_fdata()
+    vertices = vertices[0]
+    mask = vertices != 0
+    return vertices, mask
+
+
 from brainspace.gradient import GradientMaps
 
 #todo should become a class
@@ -127,17 +134,6 @@ def make_gradients(subj: int, epics=list(EPICS_FNAME.keys()), DIM_RED_APPROACH='
 
     data_epics = {epic: load_data(subj=subj, epic=epic) for epic in epics}
     corr_matrices = {epic: make_mat(data_epics[epic]) for epic in epics}
-
-    # data_rs = load_data(subj=subj, epic='rest')
-    # corr_mat_rest = make_mat(data_rs)
-    # data_lrn = load_data(subj=subj, epic='learning')
-    # corr_mat_lrn = make_mat(data_lrn)
-    # data_baseline = load_data(subj=subj, epic='baseline')
-    # corr_mat_baseline = make_mat(data_baseline)
-    # data_lrn_early = load_data(subj=subj, epic='early_learning')
-    # corr_mat_lrn_early = make_mat(data_lrn_early)
-    # data_lrn_late = load_data(subj=subj, epic='late_learning')
-    # corr_mat_lrn_late = make_mat(data_lrn_late)
 
     if gm_ref is None:
         REF_EPIC = 'rest'
@@ -156,12 +152,12 @@ def make_gradients(subj: int, epics=list(EPICS_FNAME.keys()), DIM_RED_APPROACH='
     return gm_aligned
 
 
-from brainspace.datasets import load_fsa5
+from brainspace.datasets import load_fsa5, load_conte69
 from brainspace.utils.parcellation import map_to_labels
 
 IMAGE_DIR = '../grad_results/'
 
-surf_lh, surf_rh = load_fsa5()
+surf_lh, surf_rh = load_conte69()
 
 # with brainspace plot_hemi
 
@@ -191,25 +187,6 @@ def stack_surfplot(data_to_show, text_bar, color_map, data_range, not_save_fig=F
         fig.show()
     else:
         fig.savefig(IMAGE_DIR + text_bar)
-
-
-#todo break func ? to what
-def plot_gradients(subj: int, gm, surf_labels, mask_removed):
-    grad_aligned_rs = map_to_labels(gm.aligned_[0][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad_aligned_baseline = map_to_labels(gm.aligned_[1][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad_aligned_lrn = map_to_labels(gm.aligned_[2][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad_aligned_lrn_early = map_to_labels(gm.aligned_[3][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    grad_aligned_lrn_late = map_to_labels(gm.aligned_[4][:, 0], surf_labels, mask=mask_removed, fill=np.nan)
-    # traverse over all gm.aligned_[] #
-
-    texts = ['Rest grads', 'Baseline grads', 'Learning grads', 'Early learning grads', 'Late learning grads']
-    data = [grad_aligned_rs, grad_aligned_baseline, grad_aligned_lrn, grad_aligned_lrn_early, grad_aligned_lrn_late]
-    # fill in `vir` in size of len(data)
-    color_maps = ['seismic', 'seismic', 'seismic', 'seismic', 'seismic']
-    z = zip(data, texts, color_maps)
-
-    for data_to_show, text_bar, color_map in z:
-        stack_surfplot(data_to_show, 'sub' + str(subj) + ' - ' + text_bar, color_map)
 
 
 if __name__ == "__main__":

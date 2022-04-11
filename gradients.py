@@ -11,7 +11,7 @@ EPICS_FNAME = {'rest': 'rest', 'baseline': 'RLbaseline',
 
 # func: load by fname
 def load_data(subj: int, epic: str) -> pd.DataFrame:
-    DATA_DIR = '~/Downloads/subjects/'
+    DATA_DIR = '/Users/qasem/Dropbox/JasonANDQasem_SHARED/codes/RL_dataset_Mar2022/'
     #todo restrict epics to {'rest', 'RLbaseline', 'learning', 'early', 'late'}
 
     cond = EPICS_FNAME[epic]
@@ -58,65 +58,13 @@ def make_mat(data: pd.DataFrame) -> np.array:
     return corr_mat
 
 
-# ? pass regions
-# from nilearn import plotting
-# from matplotlib import pyplot as plt
-
-
-# def plot_conn_mat(conn_mat: np.array, reduce=False):
-    # reduce mat size for visualization
-#     if reduce:
-
-#     else:
-#         fig = plt.figure(figsize=(15,15))
-#         ax = plotting.plot_matrix(conn_mat, labels=masked_regions,
-#                                         vmax=0.8, vmin=-0.8, reorder=True,
-#                                         figure=fig, # figure=(15, 15), 
-#                                         )
-
-#         fig.savefig('con-mat.png')
-    # ? if reordering
-
-
-
 import nibabel as nib
 
 # add dependencies to git repo: a conda is great
 
-# OK, we make a HUGE shitty function and
-#todo break func `load_atlas` later
-def load_atlas1(timeseriesT):
-    # fork read from a file on github: Schaefer et al. 2018
-    ATLAS_DIR = '../atlas/Schaefer2018_1000Parcels_7Networks/'
+ATLAS_FNAME = 'data/Schaefer2018_1000Parcels_7Networks_order.dlabel.nii'
 
-    atlas_lh = nib.freesurfer.read_annot(ATLAS_DIR + 'lh.Schaefer2018_1000Parcels_7Networks_order.annot')
-    surf_labels_lh = atlas_lh[0]
-    atlas_rh = nib.freesurfer.read_annot(ATLAS_DIR + 'rh.Schaefer2018_1000Parcels_7Networks_order.annot')
-    surf_labels_rh = atlas_rh[0]
-    
-    surf_labels_rh[surf_labels_rh != 0] += 500  # different labels for lh and rh
-    surf_labels = np.concatenate([surf_labels_lh, surf_labels_rh])
-
-    # ? func: to get labels (with removed regions)
-
-    labels_lh = [x.decode() for x in atlas_lh[2]]
-    labels_rh = [x.decode() for x in atlas_rh[2]]
-    labels_rh.remove('Background+FreeSurfer_Defined_Medial_Wall')
-    regions = labels_lh + labels_rh
-
-    # should remove the regions not in the timeseriesT
-    REMOVED_REGIONS = set(regions) - set(timeseriesT.columns.tolist())
-    # should first find their labels, then remove them
-    removed_labels = [regions.index(r) for r in REMOVED_REGIONS]
-    for r in REMOVED_REGIONS:
-        regions.remove(r)
-    
-    mask_removed = ~np.isin(surf_labels, removed_labels)
-
-    return surf_labels, mask_removed
-
-
-def load_atlas(filename='Schaefer2018_1000Parcels_7Networks_order.dlabel.nii'):
+def load_atlas(filename=ATLAS_FNAME):
     vertices = nib.load(filename).get_fdata()
     vertices = vertices[0]
     mask = vertices != 0
@@ -141,11 +89,10 @@ def make_gradients(subj: int, epics=list(EPICS_FNAME.keys()), DIM_RED_APPROACH='
         gm_ref.fit(corr_matrices[REF_EPIC], sparsity=0.9)
 
     gm_aligned = GradientMaps(random_state=0, alignment="procrustes", approach=DIM_RED_APPROACH)
-    # matrices = [corr_mat_rest, corr_mat_baseline, corr_mat_lrn, corr_mat_lrn_early, corr_mat_lrn_late]
     matrices = [corr_matrices[epic] for epic in epics]
 
     # removing rest and learning
-    del matrices[0], matrices[1]
+    # del matrices[0], matrices[1]
 
     gm_aligned.fit(matrices, reference=gm_ref.gradients_, sparsity=0.9)
 
@@ -171,7 +118,7 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
 # ? func inside/outside another func
-def stack_surfplot(data_to_show, text_bar, color_map, data_range, not_save_fig=False):
+def stack_surfplot(data_to_show, text_bar, color_map, data_range, not_save_fig=True):
     p = Plot(surf_lh=surf_lh, surf_rh=surf_rh,
             size=(1600, 300),
             layout='row',

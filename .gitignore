@@ -1,3 +1,5 @@
 __pycache__/gradients.cpython-38.pyc
 .gitignore
 .DS_Store
+.vscode
+.vscode/settings.json

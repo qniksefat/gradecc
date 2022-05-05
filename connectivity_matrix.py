@@ -7,8 +7,9 @@ from load_timeseries import SUBJECTS, load_timeseries
 
 def plot_conn_mat(epic: str, subject=None):
     connectivity_matrix, rois = get_conn_mat(epic, subject)
-    
+
     ### todo Reduce conn matrix size, only for visualization purposes
+
     # mat_mask = np.where(np.std(correlation_matrix, axis=1) > 0.2)[0]
     # c = correlation_matrix[mat_mask][:, mat_mask]
     # # Create corresponding region names
@@ -19,7 +20,7 @@ def plot_conn_mat(epic: str, subject=None):
                          colorbar=True, figure=(10, 15), vmax=0.8, vmin=-0.8, reorder=True)
 
 
-def get_conn_mat(epic: str, subject: int=None):
+def get_conn_mat(epic: str, subject: int = None):
     """get connectivity matrix. If subject is None, matrix averaged over all subjects.
 
     Args:
@@ -27,7 +28,7 @@ def get_conn_mat(epic: str, subject: int=None):
         subject (int, optional): when specified, get the resutl for one subject. Defaults to None.
 
     Returns:
-        _type_: matrix in ndarray, list of ROIs
+        _type_: matrix in numpy array, list of ROIs
     """
     if subject is not None:
         connectivity_matrix, rois = _get_conn_mat_subject(epic, subject)
@@ -50,6 +51,7 @@ def _get_conn_mat_subject(epic: str, subject: int):
     rois = timeseries.columns.tolist()
     timeseries = timeseries.to_numpy()
     correlation_measure = ConnectivityMeasure(kind='correlation')
+    # todo why only pearson correlation?
     connectivity_matrix = correlation_measure.fit_transform([timeseries])[0]
     np.fill_diagonal(connectivity_matrix, 0)
 
@@ -68,7 +70,8 @@ def _get_conn_mat_averaged(epic: str):
     avg_matrix, rois = _get_conn_mat_subject(epic=epic, subject=SUBJECTS[0])
     avg_matrix = np.zeros(avg_matrix.shape)
     for subject in SUBJECTS:
-            connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject)
-            avg_matrix += connectivity_matrix
+        connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject)
+        avg_matrix += connectivity_matrix
     avg_matrix /= len(SUBJECTS)
+    # todo can we see SDs over all subjects?
     return avg_matrix, rois

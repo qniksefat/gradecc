@@ -51,6 +51,7 @@ def _surf_plot(data, save_figure=False, **kwargs):
     if save_figure: figure.savefig(IMAGE_DIR + text)
 
 
+# todo name plot significant
 def plot_brain_masked(values, mask, threshold=ALPHA, **kwargs):
     significance = np.array(mask) < threshold
     values_significant = np.where(significance, np.array(values), None)

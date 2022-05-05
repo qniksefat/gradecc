@@ -60,3 +60,9 @@ def get_regions_names(idx):
 def spot_region(region):
     df = load_timeseries(1, 'rest')
     return np.array(range(df.shape[1])) == region
+
+
+# todo name all regions
+def region_names():
+    df = load_timeseries(1, 'rest')
+    return df.columns.tolist()

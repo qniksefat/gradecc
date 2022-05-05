@@ -8,6 +8,7 @@ FDR_method = 'fdr_bh'
 
 
 def get_rm_anova(df: pd.DataFrame):
+    # todo merge fdr with it. by default have the fdr pvalue
     """computes repeated measures ANOVA for each region in epics
 
     Args:
@@ -40,6 +41,7 @@ def append_fdr(df):
 
 
 def pairwise_ttests(df):
+    # todo in input, if it's pd.df you should just provide column names
     """ FDR-corrected
 
     Args:
@@ -48,10 +50,16 @@ def pairwise_ttests(df):
     Returns:
 
     """
-    df_grouped = df.groupby(['measure', 'region'])
-    df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests,
-                                                                dv='value', between='epic',
+    index = ['A', 'B']
+    if 'measure' in df.columns:
+        df_grouped = df.groupby(['measure', 'region'])
+        index = ['measure'] + index
+    else:
+        # for seed connectivity t-tests
+        df_grouped = df.groupby(['region'])
+    df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between='epic',
                                                                 subject='subject', padjust=FDR_method)
-    df_stats_pairwise = df_stats_pairwise.reset_index().set_index(['measure', 'A', 'B'])[['region', 'T', 'p-corr']]
+
+    df_stats_pairwise = df_stats_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]
     df_stats_pairwise = df_stats_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})
     return df_stats_pairwise

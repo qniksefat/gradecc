@@ -45,7 +45,6 @@ def _get_conn_mat_subject(epic: str, subject: int):
     regions = timeseries.columns.tolist()
     timeseries = timeseries.to_numpy()
     correlation_measure = ConnectivityMeasure(kind='correlation')
-    # todo why only pearson correlation?
     connectivity_matrix = correlation_measure.fit_transform([timeseries])[0]
     np.fill_diagonal(connectivity_matrix, 0)
 
@@ -61,5 +60,4 @@ def _get_conn_mat_averaged(epic: str):
         connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject)
         avg_matrix += connectivity_matrix
     avg_matrix /= len(SUBJECTS)
-    # todo can we see SDs over all subjects?
     return avg_matrix, rois

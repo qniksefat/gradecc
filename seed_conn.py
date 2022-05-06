@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from load_timeseries import load_timeseries, region_names, SUBJECTS
+from load_timeseries import load_timeseries, all_region_names, SUBJECTS
 from scipy.stats import pearsonr
 
 
@@ -21,7 +21,7 @@ def seed_connectivity(seed_regions, epic_list=None):
                     stat_map[i] = pearsonr(seed_timeseries, timeseries_subject[i])[0]
                 # Re-mask previously masked nodes (medial wall)
                 stat_map[np.where(np.mean(timeseries_subject, axis=1) == 0)] = 0
-                _df = pd.DataFrame([stat_map], columns=region_names())
+                _df = pd.DataFrame([stat_map], columns=all_region_names())
                 _df['subject'] = subject
                 _df['epic'] = epic
                 _df['seed_region'] = seed_region

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from brainspace.gradient import GradientMaps
 from tqdm import tqdm
 
@@ -9,19 +10,6 @@ from connectivity_matrix import get_conn_mat
 def make_gradients(epic_list=None, subjects=SUBJECTS,
                    num_components=4, reference_epic='baseline',
                    ) -> pd.DataFrame:
-    """_summary_
-        let's make n gradients for all subjects; over all epics
-        needs 2 lists: baseline/early/late and all 
-
-    Args:
-        epic_list (list, optional): _description_. Defaults to ['baseline', 'early', 'late'].
-        num_components (int, optional): _description_. Defaults to 4.
-        reference_epic (str, optional): _description_. Defaults to 'baseline'.
-        subjects (_type_, optional): _description_. Defaults to all SUBJECTS listed.
-
-    Returns:
-        pd.DataFrame: _description_
-    """
     if epic_list is None:
         epic_list = ['baseline', 'early', 'late']
     gradient_reference = _make_reference_gradient(reference_epic)
@@ -44,15 +32,6 @@ def make_gradients(epic_list=None, subjects=SUBJECTS,
 def _make_subject_gradients(subject, epic_list, gradient_reference: GradientMaps,
                             dim_reduction_approach='pca'):
     """ if ref is None, takes the first as ref
-
-    Args:
-        subject:
-        epic_list:
-        gradient_reference:
-        dim_reduction_approach:
-
-    Returns:
-
     """
     gradient_model = GradientMaps(random_state=0, alignment="procrustes",
                                   approach=dim_reduction_approach)
@@ -83,3 +62,31 @@ def _make_df_part(values, subject, epic, component):
     df['epic'] = epic
     df['measure'] = 'gradient' + str(component + 1)
     return df
+
+
+def variance_explained(epic_list=None, subjects=SUBJECTS,
+                       reference_epic='baseline',
+                       ) -> pd.DataFrame:
+    """ let's make n gradients for all subjects; over all epics
+    """
+    NUM_COMP = 10
+    if epic_list is None:
+        epic_list = ['baseline', 'early', 'late']
+    gradient_reference = _make_reference_gradient(reference_epic)
+    print('Computing variance explained...')
+    subjects_lambdas = []
+    for subject in tqdm(subjects):
+        subject_gradient_model = _make_subject_gradients(subject=subject, epic_list=epic_list,
+                                                         gradient_reference=gradient_reference,
+                                                         dim_reduction_approach='pca')
+        subjects_lambdas.append(np.stack(subject_gradient_model.lambdas_))
+    subjects_lambdas_avg = np.array(subjects_lambdas).mean(axis=0) / NUM_COMP
+    # todo pass without averaging, plot with SD
+    return pd.DataFrame(subjects_lambdas_avg, index=epic_list,
+                        columns=list(np.arange(10)))
+
+
+if __name__ == '__main__':
+    variance = variance_explained(epic_list=None, reference_epic='baseline',
+                                  subjects=[2, 3, 4])
+

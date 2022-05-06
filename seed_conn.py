@@ -12,22 +12,28 @@ def seed_connectivity(seed_regions, epic_list=None):
     df_seed = pd.DataFrame()
     for epic in epic_list:
         for subject in SUBJECTS:
-            timeseries_subject = load_timeseries(subject, epic)
-            timeseries_subject = timeseries_subject.to_numpy().transpose()
             for seed_region in seed_regions:
-                seed_timeseries = timeseries_subject[seed_region]
-                stat_map = np.zeros(timeseries_subject.shape[0])
-                for i in range(timeseries_subject.shape[0]):
-                    stat_map[i] = pearsonr(seed_timeseries, timeseries_subject[i])[0]
-                # Re-mask previously masked nodes (medial wall)
-                stat_map[np.where(np.mean(timeseries_subject, axis=1) == 0)] = 0
-                _df = pd.DataFrame([stat_map], columns=all_region_names())
-                _df['subject'] = subject
-                _df['epic'] = epic
-                _df['seed_region'] = seed_region
+                _df = _compute_seed_conn(seed_region, subject, epic)
                 df_seed = pd.concat([df_seed, _df], axis=0)
     df_seed = df_seed.set_index(['seed_region','epic', 'subject'])
     return df_seed
+
+
+def _compute_seed_conn(seed_region, subject, epic):
+    timeseries_subject = load_timeseries(subject, epic)
+    timeseries_subject = timeseries_subject.to_numpy().transpose()
+
+    seed_timeseries = timeseries_subject[seed_region]
+    stat_map = np.zeros(timeseries_subject.shape[0])
+    for i in range(timeseries_subject.shape[0]):
+        stat_map[i] = pearsonr(seed_timeseries, timeseries_subject[i])[0]
+    # Re-mask previously masked nodes (medial wall)
+    stat_map[np.where(np.mean(timeseries_subject, axis=1) == 0)] = 0
+    _df = pd.DataFrame([stat_map], columns=all_region_names())
+    _df['subject'] = subject
+    _df['epic'] = epic
+    _df['seed_region'] = seed_region
+    return _df
 
 
 def seed_average(df_seed):

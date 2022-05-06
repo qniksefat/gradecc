@@ -1,4 +1,7 @@
 import pandas as pd
+import os.path
+
+DATA_FILENAME = 'data/'
 
 
 def melt_df(df):
@@ -8,3 +11,7 @@ def melt_df(df):
                  value_vars=list(df.columns),
                  var_name='region', value_name='value')
     return df
+
+
+def file_exists(filename):
+    return os.path.isfile(filename)

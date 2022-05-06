@@ -7,10 +7,8 @@ from load_timeseries import SUBJECTS, load_timeseries
 
 def plot_conn_mat(epic: str, subject=None, significant_regions=True):
     connectivity_matrix, regions = get_conn_mat(epic, subject)
-
     if significant_regions:
         connectivity_matrix, regions = _mask_conn_mat(connectivity_matrix, regions)
-
     plotting.plot_matrix(connectivity_matrix, labels=regions, reorder=True,
                          colorbar=True, figure=(10, 15), vmax=0.8, vmin=-0.8)
 

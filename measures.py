@@ -2,11 +2,9 @@ import pandas as pd
 import numpy as np
 from gradient import make_gradients
 from load_timeseries import SUBJECTS
-import os.path
+from utils import file_exists, DATA_FILENAME
 from tqdm import tqdm
 tqdm.pandas()
-
-DATA_FILENAME = 'data/'
 
 
 # decorator cache
@@ -30,9 +28,7 @@ def get_measures(measures=None, epic_list=None,
         subjects = SUBJECTS
 
     filename = DATA_FILENAME + 'measures.csv'
-    file_exists = os.path.isfile(filename)
-
-    if file_exists:
+    if file_exists(filename):
         print('Reading data from', filename)
         df = pd.read_csv(filename)
         return df[(df.measure.isin(measures)) &

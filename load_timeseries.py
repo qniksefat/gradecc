@@ -1,14 +1,19 @@
 import pandas as pd
 import numpy as np
 
+
+def _make_subjects_list():
+    subjects = np.arange(1, 47)
+    # data file for subject 27 does not exist
+    subjects = np.delete(subjects, 26)
+    return subjects
+
+
 EPICS_FILENAME = {'rest': 'rest', 'baseline': 'RLbaseline',
                   'learning': 'RLlearning', 'early': 'RLlearning', 'late': 'RLlearning'}
 
 DATA_DIR = '/Users/qasem/Dropbox/JasonANDQasem_SHARED/codes/RL_dataset_Mar2022/'
-
-SUBJECTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-            17, 18, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 33, 35, 36, 38,
-            39, 40, 42, 43, 44, 45, 46, ]  # data file for subject 27 does not exist
+SUBJECTS = _make_subjects_list()
 
 
 def load_timeseries(subject: int, epic: str) -> pd.DataFrame:
@@ -21,14 +26,10 @@ def load_timeseries(subject: int, epic: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: columns=regions, rows=time trials
     """
-    try:
-        filename = make_filename(subject, epic, run=1)
-        timeseries = pd.read_csv(filename, delimiter='\t')
-    except:
-        filename = make_filename(subject, epic, run=2)
-        timeseries = pd.read_csv(filename, delimiter='\t')
+    timeseries = _try_filenames(epic, subject)
 
     window_size, start_window = 216, 3
+
     if epic in ['rest', 'baseline', 'late']:
         return timeseries[-1 * window_size:]
     elif epic == 'early':
@@ -37,15 +38,25 @@ def load_timeseries(subject: int, epic: str) -> pd.DataFrame:
         return timeseries[window_size: 2 * window_size]
 
 
-def make_filename(subject: int, epic: str, run: int) -> str:
+def _try_filenames(epic, subject):
+    try:
+        filename = _make_filename(subject, epic, run=1)
+        timeseries = pd.read_csv(filename, delimiter='\t')
+    except:
+        filename = _make_filename(subject, epic, run=2)
+        timeseries = pd.read_csv(filename, delimiter='\t')
+    return timeseries
+
+
+def _make_filename(subject: int, epic: str, run: int) -> str:
     epic = EPICS_FILENAME[epic]
-    filename = _filename_str(epic, subject, run)
+    filename = _filename_two_digits(epic, subject, run)
     filename = 'sub-' + filename + '_space-fsLR_den-91k_bold_timeseries.tsv'
     filename = DATA_DIR + filename
     return filename
 
 
-def _filename_str(epic, subject, run):
+def _filename_two_digits(epic, subject, run):
     filename = str(subject) + '_ses-01_task-' + epic + '_run-' + str(run)
     if subject < 10:
         return '0' + filename

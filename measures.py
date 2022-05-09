@@ -4,6 +4,7 @@ from gradient import make_gradients, NUM_COMPONENTS
 from load_timeseries import SUBJECTS
 from utils import file_exists, DATA_FILENAME
 from tqdm import tqdm
+
 tqdm.pandas()
 
 
@@ -35,17 +36,19 @@ def get_measures(measures=None, epic_list=None,
 
 
 def _init_get_measures(epic_list, measures, subjects):
-    if not isinstance(measures, list):
-        idx = [measures]
-    if not isinstance(subjects, list):
-        idx = [subjects]
+    if measures is None:
+        measures = ['gradient' + str(i + 1) for i in range(NUM_COMPONENTS)] + ['eccentricity']
+    elif not isinstance(measures, list):
+        measures = [measures]
+
+    if subjects is None:
+        subjects = SUBJECTS
+    elif not isinstance(subjects, list):
+        subjects = [subjects]
 
     if epic_list is None:
         epic_list = ['baseline', 'early', 'late']
-    if measures is None:
-        measures = ['gradient' + str(i + 1) for i in range(NUM_COMPONENTS)] + ['eccentricity']
-    if subjects is None:
-        subjects = SUBJECTS
+
     return epic_list, measures, subjects
 
 

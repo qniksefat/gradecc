@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from gradient import make_gradients
+from gradient import make_gradients, NUM_COMPONENTS
 from load_timeseries import SUBJECTS
 from utils import file_exists, DATA_FILENAME
 from tqdm import tqdm
@@ -20,12 +20,7 @@ def get_measures(measures=None, epic_list=None,
     Returns:
         pd.DataFrame: measures corresponding to each region, subject, epic
     """
-    if epic_list is None:
-        epic_list = ['baseline', 'early', 'late']
-    if measures is None:
-        measures = ['gradient' + str(i + 1) for i in range(4)] + ['eccentricity']
-    if subjects is None:
-        subjects = SUBJECTS
+    epic_list, measures, subjects = _init_get_measures(epic_list, measures, subjects)
 
     filename = DATA_FILENAME + 'measures.csv'
     if file_exists(filename):
@@ -37,6 +32,21 @@ def get_measures(measures=None, epic_list=None,
     else:
         make_measures()
         return get_measures(measures=measures, epic_list=epic_list, subjects=subjects)
+
+
+def _init_get_measures(epic_list, measures, subjects):
+    if not isinstance(measures, list):
+        idx = [measures]
+    if not isinstance(subjects, list):
+        idx = [subjects]
+
+    if epic_list is None:
+        epic_list = ['baseline', 'early', 'late']
+    if measures is None:
+        measures = ['gradient' + str(i + 1) for i in range(NUM_COMPONENTS)] + ['eccentricity']
+    if subjects is None:
+        subjects = SUBJECTS
+    return epic_list, measures, subjects
 
 
 # todo cache make_measures

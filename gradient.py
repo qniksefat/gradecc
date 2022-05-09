@@ -7,8 +7,11 @@ from load_timeseries import EPICS_FILENAME, SUBJECTS
 from connectivity_matrix import get_conn_mat
 
 
+NUM_COMPONENTS = 4
+
+
 def make_gradients(epic_list=None, subjects=SUBJECTS,
-                   num_components=4, reference_epic='baseline',
+                   num_components=NUM_COMPONENTS, reference_epic='baseline',
                    ) -> pd.DataFrame:
     if epic_list is None:
         epic_list = ['baseline', 'early', 'late']
@@ -69,7 +72,7 @@ def variance_explained(epic_list=None, subjects=SUBJECTS,
                        ) -> pd.DataFrame:
     """ let's make n gradients for all subjects; over all epics
     """
-    NUM_COMP = 10
+    num_comp_default = 10
     if epic_list is None:
         epic_list = ['baseline', 'early', 'late']
     gradient_reference = _make_reference_gradient(reference_epic)
@@ -80,7 +83,7 @@ def variance_explained(epic_list=None, subjects=SUBJECTS,
                                                          gradient_reference=gradient_reference,
                                                          dim_reduction_approach='pca')
         subjects_lambdas.append(np.stack(subject_gradient_model.lambdas_))
-    subjects_lambdas_avg = np.array(subjects_lambdas).mean(axis=0) / NUM_COMP
+    subjects_lambdas_avg = np.array(subjects_lambdas).mean(axis=0) / num_comp_default
     # todo pass without averaging, plot with SD
     return pd.DataFrame(subjects_lambdas_avg, index=epic_list,
                         columns=list(np.arange(10)))

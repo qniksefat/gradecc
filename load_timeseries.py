@@ -6,7 +6,7 @@ def _make_subjects_list():
     subjects = np.arange(1, 47)
     # data file for subject 27 does not exist
     subjects = np.delete(subjects, 26)
-    return subjects
+    return subjects.tolist()
 
 
 EPICS_FILENAME = {'rest': 'rest', 'baseline': 'RLbaseline',

@@ -37,7 +37,7 @@ def get_measures(measures=None, epic_list=None,
 
 def _init_get_measures(epic_list, measures, subjects):
     if measures is None:
-        measures = ['gradient' + str(i + 1) for i in range(NUM_COMPONENTS)] + ['eccentricity']
+        measures = _make_measures_list()
     elif not isinstance(measures, list):
         measures = [measures]
 
@@ -48,8 +48,14 @@ def _init_get_measures(epic_list, measures, subjects):
 
     if epic_list is None:
         epic_list = ['baseline', 'early', 'late']
+    elif not isinstance(epic_list, list):
+        epic_list = [epic_list]
 
     return epic_list, measures, subjects
+
+
+def _make_measures_list():
+    return ['gradient' + str(i + 1) for i in range(NUM_COMPONENTS)] + ['eccentricity']
 
 
 # todo cache make_measures
@@ -83,12 +89,14 @@ def _make_eccentricity(df):
     return eccentricity
 
 
-def get_measures_avg(measures=None, epic_list=None,
+def get_measures_avg(measures, epic_list,
                      subjects=SUBJECTS) -> pd.DataFrame:
-    if epic_list is None:
-        epic_list = ['baseline', 'early', 'late']
     values = get_measures(measures, epic_list, subjects)
     values = values.groupby(['region', 'epic', 'measure']) \
         .mean().drop('subject', axis=1) \
         .reset_index()
     return values
+
+
+if __name__ == '__main__':
+    pass

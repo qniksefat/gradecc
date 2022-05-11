@@ -4,29 +4,33 @@ from gradient import make_gradients, NUM_COMPONENTS
 from load_timeseries import SUBJECTS
 from utils import file_exists, DATA_FILENAME
 from tqdm import tqdm
-
 tqdm.pandas()
 
 
-# decorator cache
+def _make_filename():
+    filename = DATA_FILENAME + 'measures.csv'
+    return filename
+
+
+FILENAME = _make_filename()
+
+
+# todo decorator cache
 def get_measures(measures=None, epic_list=None,
                  subjects=SUBJECTS) -> pd.DataFrame:
     """get measures for a brain region
-
     Args:
         epic_list: list of epics such as `baseline`
         measures (list): different measures such as gradients or eccentricity
         subjects (list): if not specified, default to all subjects
-
     Returns:
         pd.DataFrame: measures corresponding to each region, subject, epic
     """
-    epic_list, measures, subjects = _init_get_measures(epic_list, measures, subjects)
+    epic_list, measures, subjects = _init_inputs(epic_list, measures, subjects)
 
-    filename = DATA_FILENAME + 'measures.csv'
-    if file_exists(filename):
-        print('Reading data from', filename)
-        df = pd.read_csv(filename)
+    if file_exists(FILENAME):
+        print('Reading data from', FILENAME)
+        df = pd.read_csv(FILENAME)
         return df[(df.measure.isin(measures)) &
                   (df.subject.isin(subjects)) &
                   (df.epic.isin(epic_list))]
@@ -35,7 +39,7 @@ def get_measures(measures=None, epic_list=None,
         return get_measures(measures=measures, epic_list=epic_list, subjects=subjects)
 
 
-def _init_get_measures(epic_list, measures, subjects):
+def _init_inputs(epic_list, measures, subjects):
     if measures is None:
         measures = _make_measures_list()
     elif not isinstance(measures, list):
@@ -65,17 +69,15 @@ def make_measures(epic_list=None, subjects=SUBJECTS):
     df_gradients = make_gradients(epic_list=epic_list, subjects=subjects)
     df_ecc = _make_eccentricity(df_gradients)
     df_measures = pd.concat([df_gradients, df_ecc], axis=0)
-    filename = DATA_FILENAME + 'measures.csv'
-    df_measures.to_csv(filename, index=False)
-    print('Saved the data to', filename)
+    df_measures.to_csv(FILENAME, index=False)
+    print('Data saved to', FILENAME)
+    return df_measures
 
 
 def _make_eccentricity(df):
     """makes eccentricity with Euclidean distance of ALL gradients available.
-
     Args:
         df (pd.DataFrame): values for gradients, typically 3 to 4, for each region
-
     Returns:
         pd.DataFrame: the eccentricity values for each region
     """
@@ -91,6 +93,7 @@ def _make_eccentricity(df):
 
 def get_measures_avg(measures, epic_list,
                      subjects=SUBJECTS) -> pd.DataFrame:
+    # todo handle non valid inputs like LATE
     values = get_measures(measures, epic_list, subjects)
     values = values.groupby(['region', 'epic', 'measure']) \
         .mean().drop('subject', axis=1) \

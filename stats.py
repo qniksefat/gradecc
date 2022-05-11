@@ -67,6 +67,9 @@ def seed_ttests(df_seed):
     return make_ttests(df_seed, save=False)
 
 
+# todo separate ttests
+
+
 def pairwise_ttests(df):
     """ FDR-corrected
     In input, if it's pd.df you should just provide column names
@@ -80,12 +83,14 @@ def pairwise_ttests(df):
 
 
 def make_ttests(df, save: bool):
+    # todo bad smell. no need to involve seed conn when making ttests
     df_grouped, index = _prepare_for_seed_conn(df)
     print('Computing ttests...')
     df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between='epic',
                                                   subject='subject', padjust=FDR_method)
     df_stats_pairwise = df_stats_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]
     df_stats_pairwise = df_stats_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})
+    df_stats_pairwise = df_stats_pairwise.sort_index()
     if save:
         filename = _make_filename('ttests')
         df_stats_pairwise.to_csv(filename)
@@ -101,3 +106,9 @@ def _prepare_for_seed_conn(df):
         # means it's seed conn
         df_grouped = df.groupby(['region'])
     return df_grouped, index
+
+
+if __name__ == '__main__':
+    from measures import get_measures
+    df = get_measures()
+    df_stats_pairwise = pairwise_ttests(df)

@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+pd.options.mode.chained_assignment = None
+
 
 def _make_subjects_list():
     subjects = np.arange(1, 47)
@@ -11,7 +13,6 @@ def _make_subjects_list():
 
 EPICS_FILENAME = {'rest': 'rest', 'baseline': 'RLbaseline',
                   'learning': 'RLlearning', 'early': 'RLlearning', 'late': 'RLlearning'}
-
 DATA_DIR = '/Users/qasem/Dropbox/JasonANDQasem_SHARED/codes/RL_dataset_Mar2022/'
 SUBJECTS = _make_subjects_list()
 
@@ -27,25 +28,28 @@ def load_timeseries(subject: int, epic: str) -> pd.DataFrame:
         pd.DataFrame: columns=regions, rows=time trials
     """
     timeseries = _try_filenames(epic, subject)
-
-    window_size, start_window = 216, 3
-
-    if epic in ['rest', 'baseline', 'late']:
-        return timeseries[-1 * window_size:]
-    elif epic == 'early':
-        return timeseries[start_window: start_window + window_size]
-    elif epic == 'learning':
-        return timeseries[window_size: 2 * window_size]
+    return _window_timeseries(epic, timeseries)
 
 
 def _try_filenames(epic, subject):
     try:
         filename = _make_filename(subject, epic, run=1)
         timeseries = pd.read_csv(filename, delimiter='\t')
+    # todo except FileNotFoundError:
     except:
         filename = _make_filename(subject, epic, run=2)
         timeseries = pd.read_csv(filename, delimiter='\t')
     return timeseries
+
+
+def _window_timeseries(epic, timeseries):
+    window_size, start_window = 216, 3
+    if epic in ['rest', 'baseline', 'late']:
+        return timeseries[-1 * window_size:]
+    elif epic == 'early':
+        return timeseries[start_window: start_window + window_size]
+    elif epic == 'learning':
+        return timeseries[window_size: 2 * window_size]
 
 
 def _make_filename(subject: int, epic: str, run: int) -> str:
@@ -62,6 +66,9 @@ def _filename_two_digits(epic, subject, run):
         return '0' + filename
     else:
         return filename
+
+
+# hmm. can separate followings. what correct structure?
 
 
 def get_regions_names(idx):

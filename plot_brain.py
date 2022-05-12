@@ -78,8 +78,8 @@ def plot_brain_masked(data, value: str, mask: str, threshold=ALPHA, **kwargs):
     mask = data[mask]
     value = data[value]
     significance = np.array(mask) < threshold
-    data['value_masked'] = np.where(significance, np.array(value), 0)
-    plot_brain(data, 'value_masked', **kwargs)
+    data['plot_value'] = np.where(significance, np.array(value), 0)
+    plot_brain(data, 'plot_value', **kwargs)
 
 
 if __name__ == '__main__':

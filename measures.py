@@ -91,7 +91,7 @@ def _make_eccentricity(df):
     return eccentricity
 
 
-def get_measures_avg(measures, epic_list,
+def get_measures_avg(epic_list=None, measures=None,
                      subjects=SUBJECTS) -> pd.DataFrame:
     # todo handle non valid inputs like LATE
     values = get_measures(measures, epic_list, subjects)

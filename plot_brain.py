@@ -6,6 +6,8 @@ from stats import ALPHA
 import numpy as np
 import nibabel as nib
 
+from utils import melt_df
+
 nib.imageglobals.logger.level = 40
 
 IMAGE_DIR = '../grad_results/'
@@ -26,11 +28,19 @@ def _init_atlas():
         ATLAS['vertex_labels'], ATLAS['vertex_masked'] = load_atlas()
 
 
-def plot_brain(data, value='value', save_figure=False, **kwargs):
-    """ if pd.DataFrame, should have `value` and `region`. if pd.Series, should set index to `region`
+def plot_brain(data, value='value', mask=None, **kwargs):
+    if mask is None:
+        _plot_brain(data, value, **kwargs)
+    else:
+        _plot_brain_masked(data, value, mask, **kwargs)
+
+
+# todo involve masked to plot.
+def _plot_brain(data, value, **kwargs):
+    """
     Args:
+        data: if pd.DataFrame, should have `value` and `region`. if pd.Series, should set index to `region`
         value: if data is pd.df, what column to plot
-        save_figure: saves the figure to DIR with text filename
         data: values with regions index
     """
     _init_atlas()
@@ -38,14 +48,18 @@ def plot_brain(data, value='value', save_figure=False, **kwargs):
     data = _sort_to_plot(data, value)
     data = map_to_labels(data, ATLAS['vertex_labels'], mask=ATLAS['vertex_masked'])
     # todo consider other methods like brainspace hemi plot
-    _surf_plot(data, save_figure, **kwargs)
+    _surf_plot(data, **kwargs)
 
 
 def _handle_df_series(data, value):
     if isinstance(data, pd.Series):
-        return data
+        return data.rename(value).rename_axis('region')
     elif isinstance(data, pd.DataFrame):
-        return data.set_index('region')[value]
+        if 'region' in data.columns:
+            return data.set_index('region')[value]
+        else:
+            # should not work
+            return melt_df(data)
     # todo except with type input error
 
 
@@ -61,7 +75,7 @@ def _sort_to_plot(data, value):
     return data
 
 
-def _surf_plot(data, save_figure=False, **kwargs):
+def _surf_plot(data, **kwargs):
     text = kwargs.get('text', '')
     p = Plot(surf_lh=ATLAS['left_surface'], surf_rh=ATLAS['right_surface'],
              size=(1600, 300), layout='row', label_text=[text])
@@ -69,17 +83,17 @@ def _surf_plot(data, save_figure=False, **kwargs):
                 color_range=kwargs.get('color_range', None))
     figure = p.build()
     # figure.show()
-    if save_figure:
+    if kwargs.get('save_figure', False):
         figure.savefig(IMAGE_DIR + text)
 
 
 # todo name plot significant
-def plot_brain_masked(data, value: str, mask: str, threshold=ALPHA, **kwargs):
+def _plot_brain_masked(data, value: str, mask: str, **kwargs):
     mask = data[mask]
     value = data[value]
-    significance = np.array(mask) < threshold
+    significance = np.array(mask) < kwargs.get('threshold', ALPHA)
     data['plot_value'] = np.where(significance, np.array(value), 0)
-    plot_brain(data, 'plot_value', **kwargs)
+    _plot_brain(data, 'plot_value', **kwargs)
 
 
 if __name__ == '__main__':

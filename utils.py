@@ -1,11 +1,13 @@
 import pandas as pd
 import os.path
 
+from load_timeseries import all_region_names
+
 DATA_FILENAME = 'data/'
 
 
 def melt_df(df):
-    df.columns = list(range(df.shape[1]))
+    df.columns = all_region_names()
     df = pd.melt(df.reset_index(),
                  id_vars=['seed_region', 'epic', 'subject'],
                  value_vars=list(df.columns),

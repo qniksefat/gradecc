@@ -41,3 +41,21 @@ def seed_average(df_seed):
         .groupby(['seed_region', 'epic']) \
         .mean().drop('subject', axis=1)
 
+
+if __name__ == '__main__':
+    from plot_brain import plot_brain
+    # df_seed = seed_connectivity('7Networks_LH_Default_PFC_19')
+    # df_seed_avg = seed_average(df_seed)
+
+    import pickle
+
+    # with open('seed_avg.pickle', 'wb') as handle:
+    #     pickle.dump(df_seed_avg, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with open('seed_avg.pickle', 'rb') as handle:
+        df_seed_avg = pickle.load(handle)
+
+    text = 'average seed connectivity \n in Late epoch for \n'
+    plot_brain(df_seed_avg.loc['7Networks_LH_Default_PFC_19', 'late'].T,
+               color_range=(-1, 1), color_map='bwr', text=text)
+

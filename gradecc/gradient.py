@@ -3,8 +3,8 @@ import numpy as np
 from brainspace.gradient import GradientMaps
 from tqdm import tqdm
 
-from load_timeseries import SUBJECTS
-from connectivity_matrix import get_conn_mat
+from gradecc.load_timeseries import SUBJECTS
+from gradecc.connectivity_matrix import get_conn_mat
 
 NUM_COMPONENTS = 4
 SPARSITY = 0.9
@@ -110,4 +110,4 @@ def _cum_sum(variance):
 
 
 if __name__ == '__main__':
-    m = make_gradients(None, [1, 3, 4])
+    pass

@@ -1,29 +1,31 @@
+from os import path
+import warnings
 import pandas as pd
-import numpy as np
+
+from gradecc.filenames import DATA_FILENAME, DATA_DIR
 
 pd.options.mode.chained_assignment = None
+warnings.simplefilter("ignore")
 
 
 def _make_subjects_list():
-    subjects = np.arange(1, 47)
-    # data file for subject 27 does not exist
-    subjects = np.delete(subjects, 26)
-    return subjects.tolist()
+    participants_filename = path.join(DATA_FILENAME, 'participants.tsv')
+    subjects = pd.read_csv(participants_filename, delimiter='\t')
+    subjects = subjects[subjects.exclude == False].participant_id.to_list()
+    return subjects
 
 
 EPICS_FILENAME = {'rest': 'rest', 'baseline': 'RLbaseline',
                   'learning': 'RLlearning', 'early': 'RLlearning', 'late': 'RLlearning'}
-DATA_DIR = '/Users/qasem/Dropbox/JasonANDQasem_SHARED/codes/RL_dataset_Mar2022/'
+
 SUBJECTS = _make_subjects_list()
 
 
 def load_timeseries(subject: int, epic: str) -> pd.DataFrame:
-    """fMRI timeseries data 
-
+    """fMRI timeseries data
     Args:
         subject (int): subject number
         epic (str): time period during the task, such as `rest`, `baseline`, `early` learning
-
     Returns:
         pd.DataFrame: columns=regions, rows=time trials
     """
@@ -56,7 +58,7 @@ def _make_filename(subject: int, epic: str, run: int) -> str:
     epic = EPICS_FILENAME[epic]
     filename = _filename_two_digits(epic, subject, run)
     filename = 'sub-' + filename + '_space-fsLR_den-91k_bold_timeseries.tsv'
-    filename = DATA_DIR + filename
+    filename = path.join(DATA_DIR, filename)
     return filename
 
 
@@ -68,19 +70,14 @@ def _filename_two_digits(epic, subject, run):
         return filename
 
 
-# hmm. can separate followings. what correct structure?
-
-
-def get_regions_names(idx):
-    if not isinstance(idx, list):
-        idx = [idx]
-    df = load_timeseries(1, 'rest')
-    return df.iloc[:0, idx].columns.tolist()
+# todo hmm. can separate followings. what correct structure?
 
 
 def spot_region(region):
-    df = load_timeseries(1, 'rest')
-    return np.array(range(df.shape[1])) == region
+    df = pd.DataFrame(columns=all_region_names(), index=['value'])
+    df.loc['value', :] = 0
+    df.loc['value', region] = 1
+    return pd.melt(df, value_vars=list(df.columns), var_name='region')
 
 
 def all_region_names():

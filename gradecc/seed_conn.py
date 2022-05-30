@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
-from load_timeseries import load_timeseries, all_region_names, SUBJECTS
 from scipy.stats import pearsonr
+
+from gradecc.load_timeseries import load_timeseries, all_region_names, SUBJECTS
 
 
 def seed_connectivity(seed_regions, epic_list=None):

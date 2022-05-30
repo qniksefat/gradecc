@@ -2,7 +2,7 @@ import numpy as np
 from nilearn import plotting
 from nilearn.connectome import ConnectivityMeasure
 
-from load_timeseries import SUBJECTS, load_timeseries
+from gradecc.load_timeseries import SUBJECTS, load_timeseries
 
 
 def plot_conn_mat(epic: str, subject=None, significant_regions=True):

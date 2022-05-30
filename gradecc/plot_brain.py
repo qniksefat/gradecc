@@ -2,16 +2,16 @@ import pandas as pd
 from brainspace.datasets import load_conte69
 from brainspace.utils.parcellation import map_to_labels
 from surfplot import Plot
-from stats import ALPHA
 import numpy as np
 import nibabel as nib
 
-from utils import melt_df
+from gradecc.stats import ALPHA
+from gradecc.utils import melt_df
+from gradecc.filenames import IMAGE_DIR, ATLAS_FILENAME
+
 
 nib.imageglobals.logger.level = 40
 
-IMAGE_DIR = '../grad_results/'
-ATLAS_FILENAME = 'data/Schaefer2018_1000Parcels_7Networks_order.dlabel.nii'
 ATLAS = {}
 
 
@@ -26,6 +26,15 @@ def _init_atlas():
     if ATLAS == {}:
         ATLAS['left_surface'], ATLAS['right_surface'] = load_conte69()
         ATLAS['vertex_labels'], ATLAS['vertex_masked'] = load_atlas()
+        # todo inflated brain maps
+        """
+        from neuromaps.datasets import fetch_fsaverage
+        surfaces = fetch_fsaverage(density='164k')
+        ATLAS['left_surface'], ATLAS['right_surface'] = surfaces['inflated']
+        from nilearn.datasets import fetch_surf_fsaverage
+        ATLAS['left_surface'] = fetch_surf_fsaverage(mesh='fsaverage')['curv_left']
+        ATLAS['right_surface'] = fetch_surf_fsaverage(mesh='fsaverage')['curv_right']
+        """
 
 
 def plot_brain(data, value='value', mask=None, **kwargs):
@@ -76,15 +85,25 @@ def _sort_to_plot(data, value):
 
 
 def _surf_plot(data, **kwargs):
-    text = kwargs.get('text', '')
+    layout, size, text = _init_surfplot(**kwargs)
     p = Plot(surf_lh=ATLAS['left_surface'], surf_rh=ATLAS['right_surface'],
-             size=(1600, 300), layout='row', label_text=[text])
-    p.add_layer(data, cbar=True, cmap=kwargs.get('color_map', 'viridis'),
+             label_text=[text], layout=layout, size=size)
+    p.add_layer(data, cbar=True,
+                cmap=kwargs.get('color_map', 'viridis'),
+                as_outline=kwargs.get('as_outline', False),
                 color_range=kwargs.get('color_range', None))
     figure = p.build()
     # figure.show()
     if kwargs.get('save_figure', False):
         figure.savefig(IMAGE_DIR + text)
+
+
+def _init_surfplot(**kwargs):
+    text = kwargs.get('text', '')
+    layout = kwargs.get('layout', 'row')
+    size_layout = {'row': (1600, 300), 'column': (700, 1100), 'grid': (900, 700)}
+    size = size_layout[layout]
+    return layout, size, text
 
 
 # todo name plot significant
@@ -97,4 +116,14 @@ def _plot_brain_masked(data, value: str, mask: str, **kwargs):
 
 
 if __name__ == '__main__':
-    pass
+    # %%
+    from gradecc.measures import get_measures
+
+    df = get_measures()
+    # %%
+    from gradecc.stats import rm_anova
+
+    df_stats = rm_anova(df)
+    df_stats_ecc = df_stats[df_stats.measure == 'eccentricity']
+
+    plot_brain(df_stats_ecc, 'F', 'pvalue_corrected', color_range=(1, 10))

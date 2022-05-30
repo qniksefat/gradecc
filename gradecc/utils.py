@@ -1,9 +1,7 @@
 import pandas as pd
 import os.path
 
-from load_timeseries import all_region_names
-
-DATA_FILENAME = 'data/'
+from gradecc.load_timeseries import all_region_names
 
 
 def melt_df(df):

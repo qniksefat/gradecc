@@ -1,7 +1,9 @@
 import pandas as pd
 import pingouin as pg
 from tqdm import tqdm
-from utils import file_exists, DATA_FILENAME, melt_df
+
+from gradecc.utils import file_exists, melt_df
+from gradecc.filenames import DATA_FILENAME
 
 tqdm.pandas()
 
@@ -62,9 +64,9 @@ def _fdr_correction(df_stats):
     return df_stats
 
 
-def seed_ttests(df_seed):
+def seed_ttests(df_seed, **kwargs):
     df_seed = melt_df(df_seed)
-    return make_ttests(df_seed, save=False)
+    return make_ttests(df_seed, save=True, **kwargs)
 
 
 # todo separate ttests
@@ -82,7 +84,7 @@ def pairwise_ttests(df):
         return make_ttests(df, save=True)
 
 
-def make_ttests(df, save: bool):
+def make_ttests(df, save: bool, **kwargs):
     # todo bad smell. no need to involve seed conn when making ttests
     df_grouped, index = _prepare_for_seed_conn(df)
     print('Computing ttests...')
@@ -92,7 +94,7 @@ def make_ttests(df, save: bool):
     df_stats_pairwise = df_stats_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})
     df_stats_pairwise = df_stats_pairwise.sort_index()
     if save:
-        filename = _make_filename('ttests')
+        filename = _make_filename(kwargs.get('filename', 'ttests'))
         df_stats_pairwise.to_csv(filename)
     return df_stats_pairwise
 

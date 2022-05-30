@@ -2,15 +2,14 @@ from os import path
 import warnings
 import pandas as pd
 
-from gradecc.filenames import DATA_FILENAME, DATA_DIR
+from gradecc.filenames import subjects_filename, dir_dataset
 
 pd.options.mode.chained_assignment = None
 warnings.simplefilter("ignore")
 
 
 def _make_subjects_list():
-    participants_filename = path.join(DATA_FILENAME, 'participants.tsv')
-    subjects = pd.read_csv(participants_filename, delimiter='\t')
+    subjects = pd.read_csv(subjects_filename, delimiter='\t')
     subjects = subjects[subjects.exclude == False].participant_id.to_list()
     return subjects
 
@@ -58,7 +57,7 @@ def _make_filename(subject: int, epic: str, run: int) -> str:
     epic = EPICS_FILENAME[epic]
     filename = _filename_two_digits(epic, subject, run)
     filename = 'sub-' + filename + '_space-fsLR_den-91k_bold_timeseries.tsv'
-    filename = path.join(DATA_DIR, filename)
+    filename = path.join(dir_dataset, filename)
     return filename
 
 

@@ -5,17 +5,9 @@ from tqdm import tqdm
 from gradecc.gradient import make_gradients, NUM_COMPONENTS
 from gradecc.load_timeseries import SUBJECTS
 from gradecc.utils import file_exists
-from gradecc.filenames import DATA_FILENAME
+from gradecc.filenames import measures_filename
 
 tqdm.pandas()
-
-
-def _make_filename():
-    filename = DATA_FILENAME + 'measures.csv'
-    return filename
-
-
-FILENAME = _make_filename()
 
 
 # todo decorator cache
@@ -31,9 +23,9 @@ def get_measures(measures=None, epic_list=None,
     """
     epic_list, measures, subjects = _init_inputs(epic_list, measures, subjects)
 
-    if file_exists(FILENAME):
-        print('Reading data from', FILENAME)
-        df = pd.read_csv(FILENAME)
+    if file_exists(measures_filename):
+        print('Reading data from', measures_filename)
+        df = pd.read_csv(measures_filename)
         return df[(df.measure.isin(measures)) &
                   (df.subject.isin(subjects)) &
                   (df.epic.isin(epic_list))]
@@ -72,8 +64,8 @@ def make_measures(epic_list=None, subjects=SUBJECTS):
     df_gradients = make_gradients(epic_list=epic_list, subjects=subjects)
     df_ecc = _make_eccentricity(df_gradients)
     df_measures = pd.concat([df_gradients, df_ecc], axis=0)
-    df_measures.to_csv(FILENAME, index=False)
-    print('Data saved to', FILENAME)
+    df_measures.to_csv(measures_filename, index=False)
+    print('Data saved to', measures_filename)
     return df_measures
 
 

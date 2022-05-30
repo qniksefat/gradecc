@@ -1,3 +1,4 @@
+from os import path
 import pandas as pd
 from brainspace.datasets import load_conte69
 from brainspace.utils.parcellation import map_to_labels
@@ -7,7 +8,7 @@ import nibabel as nib
 
 from gradecc.stats import ALPHA
 from gradecc.utils import melt_df
-from gradecc.filenames import IMAGE_DIR, ATLAS_FILENAME
+from gradecc.filenames import dir_images, atlas_filename
 
 
 nib.imageglobals.logger.level = 40
@@ -15,7 +16,7 @@ nib.imageglobals.logger.level = 40
 ATLAS = {}
 
 
-def load_atlas(filename=ATLAS_FILENAME):
+def load_atlas(filename=atlas_filename):
     vertices = nib.load(filename).get_fdata()
     vertices = vertices[0]
     mask = vertices != 0
@@ -95,7 +96,12 @@ def _surf_plot(data, **kwargs):
     figure = p.build()
     # figure.show()
     if kwargs.get('save_figure', False):
-        figure.savefig(IMAGE_DIR + text)
+        _save_figure(figure, text)
+
+
+def _save_figure(figure, text):
+    figure_filename = path.join(dir_images, text)
+    figure.savefig(figure_filename)
 
 
 def _init_surfplot(**kwargs):

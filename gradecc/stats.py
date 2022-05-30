@@ -1,9 +1,11 @@
+from os import path
+
 import pandas as pd
 import pingouin as pg
 from tqdm import tqdm
 
 from gradecc.utils import file_exists, melt_df
-from gradecc.filenames import DATA_FILENAME
+from gradecc.filenames import data_inside
 
 tqdm.pandas()
 
@@ -27,7 +29,9 @@ def rm_anova(df=None):
 
 
 def _make_filename(file):
-    return DATA_FILENAME + file + '.csv'
+    filename = file + '.csv'
+    filename = path.join(data_inside, filename)
+    return filename
 
 
 def make_rm_anova(df):

@@ -6,10 +6,7 @@ from gradecc.load_timeseries import load_timeseries, all_region_names, SUBJECTS
 
 
 def seed_connectivity(seed_regions, epic_list=None):
-    if epic_list is None:
-        epic_list = ['baseline', 'early', 'late']
-    if not isinstance(seed_regions, list):
-        seed_regions = [seed_regions]
+    epic_list, seed_regions = _init_inputs_seed_conn(epic_list, seed_regions)
     df_seed = pd.DataFrame()
     for epic in epic_list:
         for subject in SUBJECTS:
@@ -20,11 +17,19 @@ def seed_connectivity(seed_regions, epic_list=None):
     return df_seed
 
 
+def _init_inputs_seed_conn(epic_list, seed_regions):
+    if epic_list is None:
+        epic_list = ['baseline', 'early', 'late']
+    if not isinstance(seed_regions, list):
+        seed_regions = [seed_regions]
+    return epic_list, seed_regions
+
+
 def _compute_seed_conn(seed_region, subject, epic):
     timeseries_subject = load_timeseries(subject, epic)
-    timeseries_subject = timeseries_subject.to_numpy().transpose()
-
-    seed_timeseries = timeseries_subject[seed_region]
+    timeseries_subject = timeseries_subject.transpose()
+    seed_timeseries = timeseries_subject.loc[seed_region]
+    timeseries_subject = timeseries_subject.to_numpy()
     stat_map = np.zeros(timeseries_subject.shape[0])
     for i in range(timeseries_subject.shape[0]):
         stat_map[i] = pearsonr(seed_timeseries, timeseries_subject[i])[0]
@@ -58,5 +63,5 @@ if __name__ == '__main__':
 
     text = 'average seed connectivity \n in Late epoch for \n'
     plot_brain(df_seed_avg.loc['7Networks_LH_Default_PFC_19', 'late'].T,
-               color_range=(-1, 1), color_map='bwr', text=text)
+                color_range=(-1, 1), color_map='bwr', text=text)
 

@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from gradecc.gradient import make_gradients, NUM_COMPONENTS
-from gradecc.load_timeseries import SUBJECTS
-from gradecc.utils import file_exists
-from gradecc.filenames import measures_filename
+from gradecc.compute.gradient import make_gradients, NUM_COMPONENTS
+from gradecc.load_timeseries.utils import SUBJECTS
+from gradecc.utils.utils import file_exists
+from gradecc.utils.filenames import measures_filename
 
 tqdm.pandas()
 

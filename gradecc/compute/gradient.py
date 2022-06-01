@@ -3,7 +3,7 @@ import numpy as np
 from brainspace.gradient import GradientMaps
 from tqdm import tqdm
 
-from gradecc.load_timeseries import SUBJECTS
+from gradecc.load_timeseries.utils import SUBJECTS
 from gradecc.connectivity_matrix import get_conn_mat
 
 NUM_COMPONENTS = 4

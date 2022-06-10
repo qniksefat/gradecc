@@ -1,65 +1,70 @@
-# gradients-RL-task
-Computing brain macroscale gradients in a motor Reinforcement Learning task.
+# gradecc
+Brain Gradients in a Motor Reinforcement Learning task.
 
-# basics
+## Task
 
-## dataset
+## Dataset
 
-dataset is observed fMRI from 46 subjects during a motor Reinforcement Learning task. 
-stored in `codes/RL_dataset_Mar2022/`
+We had 46 subjects in functional MRI during a Motor Reinforcement Learning.
+Stored as different files in `RL_dataset_Mar2022/`.
 
-## atlas
+Seven subjects are remove due to behavioural issues. It's marked in `./data/participants.tsv`.
+Also, subject SH1 excluded for not having subcortical data. Total of 8.
 
-stored in `data/Schaefer2018_1000Parcels_7Networks_order`
+### Atlas
+Cortical atlas is stored in `./data/Schaefer2018_1000Parcels_7Networks_order`.
 
----
+### Time-series extraction
+Cortical by Dan Gale. Subcortical/Cerebellum by Corson Areshenkoff.
 
-## data extraction
-timeseries by Dan
-
-## analysis
-- correlation matrix by nilearn
-- gradient analysis by brainspace
-- seed connectivity analysis
-
-## statistical analysis
-- pairwise t-stats
-- repeated measures ANOVA by pingouin
-- false discovery rate correction
-
-## plots
-- connectivity matrix
-- gradients
-- statistics
-- seed connectivity
-
----
-
-## epic
-the time periods during the task as follows.
-data is stored in csv files.
-each epic set to be `216` trials. tr ~ 2 seconds.
+### Epoch
+Time-periods during the task as follows.
+Each epoch is set to be **216 time-trials** of each ~ 2 seconds. 
+Other time-trials dismissed.
  
-- rest: when subject is not doing the task.
-297 trs. frist 3 trs dismissed.
-- baseline: when subject is doing the task but no learning is in progress.
-219 trs. frist 3 trs dismissed.
-- learning: subject gets new feedback and starts learning the new criteria by herself.
-619 trs. divied to early and late. this epic is trs 200:416.
+- `rest` Subject is not doing the task.
+297 trs. First 3 trs dismissed.
+- `baseline` Subject is doing the task but no reward is given.
+219 trs. First 3 trs dismissed.
+- `learning` Subject starts getting rewards.
+619 trs. Divided into early and late sections to differentiate learned period.
+    - `early` When subject starts knowing how the task has changed. First 3 trs dismissed 
+     => 3:219 trs.
+    - `late` When some subjects got it right. The last 216 trs.
 
-    - early: when it seems that the subject doesn't know how the task has changed. first 3 trs dismissed => 3:219 trs.
-    - late: when apparently most subject got it right. last 216 trs.
 
-## indicator
+## Analysis
+- Correlation matrix by Nilearn
+- Gradient analysis by Brainspace
+  - `measure` 
+Any value for a brain region. 
+For example, value for gradient 2 on for 7Networks_LH_Vis_3.
+  - `eccentricity`
+Euclidian distance to the center of PCA space. Sum of top 3 or 4 gradient components squared.
 
-maybe needs to be -> measure
+- Behavioural analysis.
+ Based on task scores.
 
-shows the value of that region of interest (ROI). for example, gradient 1.
 
-### gradient
+## Statistical analysis
+- Pairwise t-tests
+- Repeated-measures ANOVA by pingouin
 
-transforming each ROI to another space by taking highest variance PCA. cite Margulies 2016.
+  After including subcortical regions in gradient analysis, number of significant regions decreased from 57 to 50. No significant regions found in subcortex. 
 
-### eccentricity
+- False discovery rate (FDR) correction
+ by Benjamini-Hochberg method
 
-sum of top three gradient components squared. a distance to grad center.
+## Post-hoc analysis
+Seed connectivity of Regions of interest. 
+Comparing shifts in functional connectivity pattern. 
+
+
+## Plots
+- Connectivity matrix
+- Gradients
+- Statistics
+- Seed connectivity
+- Behavioural
+
+

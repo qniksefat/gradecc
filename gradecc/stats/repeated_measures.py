@@ -2,7 +2,7 @@ import pandas as pd
 import pingouin as pg
 
 from gradecc.stats.false_discovery import _fdr_correction
-from gradecc.stats.utils import _make_filename
+from gradecc.utils.filenames import rm_anova_filename
 from gradecc.utils.utils import file_exists
 
 
@@ -11,9 +11,8 @@ def rm_anova(df=None):
     Returns:
         pd.DataFrame with F-statistic and p-values
     """
-    filename = _make_filename('rm_anova')
-    if file_exists(filename):
-        return pd.read_csv(filename)
+    if file_exists(rm_anova_filename):
+        return pd.read_csv(rm_anova_filename)
     else:
         if _has_one_epic(df):
             raise ValueError('file Needs more than one epic to compute ANOVA within them')
@@ -24,8 +23,7 @@ def rm_anova(df=None):
 def make_rm_anova(df):
     df_stats = _compute_rm_anova(df)
     df_stats = _fdr_correction(df_stats)
-    filename = _make_filename('rm_anova')
-    df_stats.to_csv(filename, index=False)
+    df_stats.to_csv(rm_anova_filename, index=False)
     return df_stats
 
 

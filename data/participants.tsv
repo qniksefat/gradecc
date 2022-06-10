@@ -35,7 +35,7 @@ participant_id	dicom_dir	exclude
 34	NC1	1
 35	NW1	0
 36	RG1	0
-37	SH1	0
+37	SH1	1
 38	SK1	0
 39	SM1	1
 40	SM2	0

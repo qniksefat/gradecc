@@ -12,11 +12,6 @@ def ttests(df):
     """
     if file_exists(ttests_filename):
         _, index = _prepare_for_seed_conn(df)
-        print('index', index)
-        print(ttests_filename)
-        print(
-            pd.read_csv(ttests_filename)
-        )
         return pd.read_csv(ttests_filename).set_index(index)
     else:
         return make_ttests(df, save=True)
@@ -25,7 +20,7 @@ def ttests(df):
 def make_ttests(df, save: bool):
     # todo bad smell. no need to involve seed conn when making ttests
     df_grouped, index = _prepare_for_seed_conn(df)
-    print('Computing ttests...')
+    print('Computing t-tests...')
     df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between='epic',
                                                   subject='subject', padjust=FDR_method)
     df_stats_pairwise = df_stats_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]

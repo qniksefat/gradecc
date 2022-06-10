@@ -1,6 +1,6 @@
 from os import path
 import pandas as pd
-from gradecc.utils.filenames import subjects_filename, dir_subcortical
+from gradecc.utils.filenames import subjects_filename, dir_subcortical, atlas_subc_filename
 from gradecc.load_timeseries.utils import _window_timeseries, EPICS_FILENAME_SUBC
 
 
@@ -27,7 +27,9 @@ def _make_subc_filename(subject: str, epic):
 
 
 def _rename_columns_to_region_names(ts_subc):
-    # todo
+    atlas_subc = pd.read_csv(atlas_subc_filename)
+    subcortical_regions_ordered = atlas_subc['Label'].tolist()
+    ts_subc.columns = subcortical_regions_ordered
     return ts_subc
 
 

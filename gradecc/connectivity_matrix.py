@@ -1,21 +1,30 @@
+from os import path
 import numpy as np
 from nilearn import plotting
 from nilearn.connectome import ConnectivityMeasure
+import matplotlib.pyplot as plt
 
-from gradecc.load_timeseries import SUBJECTS, load_timeseries
+from gradecc.load_timeseries import load_ts, INCLUDE_SUBC
+from gradecc.load_timeseries.utils import SUBJECTS
+from gradecc.utils.filenames import dir_images
 
 
-def plot_conn_mat(epic: str, subject=None, significant_regions=True):
-    connectivity_matrix, regions = get_conn_mat(epic, subject)
+def plot_conn_mat(epic: str, subject=None, significant_regions=True, output_file=None, **kwargs):
+    connectivity_matrix, regions = get_conn_mat(epic, subject, **kwargs)
     if significant_regions:
         connectivity_matrix, regions = _mask_conn_mat(connectivity_matrix, regions)
-    plotting.plot_matrix(connectivity_matrix, labels=regions, reorder=True,
-                         colorbar=True, figure=(10, 15), vmax=0.8, vmin=-0.8)
+    fig = plt.figure(figsize=(15, 10))
+    plotting.plot_matrix(connectivity_matrix, labels=regions,
+                         reorder=kwargs.get('reorder', True),
+                         colorbar=True, vmax=0.8, vmin=-0.8,
+                         figure=fig)
+    if output_file:
+        fig.savefig(path.join(dir_images, output_file + '.png'))
 
 
 def _mask_conn_mat(conn_mat, regions):
-    sd_threshold = _variance_threshold(conn_mat)
-    conn_mat_mask = np.where(np.std(conn_mat, axis=1) > sd_threshold)[0]
+    var_threshold = _variance_threshold(conn_mat)
+    conn_mat_mask = np.where(np.std(conn_mat, axis=1) > var_threshold)[0]
     conn_mat_masked = conn_mat[conn_mat_mask][:, conn_mat_mask]
     regions_masked = [regions[i] for i in conn_mat_mask]
     return conn_mat_masked, regions_masked
@@ -26,20 +35,22 @@ def _variance_threshold(conn_mat):
     return sd_threshold
 
 
-def get_conn_mat(epic: str, subject: int = None):
+def get_conn_mat(epic: str, subject: int = None, **kwargs):
     """get connectivity matrix. If subject is None, matrix averaged over all subjects.
     """
+    # todo select part of regions
     if subject is not None:
-        connectivity_matrix, regions = _get_conn_mat_subject(epic, subject)
+        connectivity_matrix, regions = _get_conn_mat_subject(epic, subject, **kwargs)
     else:
-        connectivity_matrix, regions = _get_conn_mat_averaged(epic)
+        connectivity_matrix, regions = _get_conn_mat_averaged(epic, **kwargs)
     return connectivity_matrix, regions
 
 
-def _get_conn_mat_subject(epic: str, subject: int):
+def _get_conn_mat_subject(epic: str, subject: int, **kwargs):
     """connectivity matrix within an epic for a subject
     """
-    timeseries = load_timeseries(epic=epic, subject=subject)
+    include_subc = kwargs.get('include_subcortex', INCLUDE_SUBC)
+    timeseries = load_ts(epic=epic, subject=subject, include_subcortex=include_subc)
     regions = timeseries.columns.tolist()
     timeseries = timeseries.to_numpy()
     correlation_measure = ConnectivityMeasure(kind='correlation')
@@ -49,13 +60,13 @@ def _get_conn_mat_subject(epic: str, subject: int):
     return connectivity_matrix, regions
 
 
-def _get_conn_mat_averaged(epic: str):
+def _get_conn_mat_averaged(epic: str, subjects=SUBJECTS, **kwargs):
     """connectivity matrix for an epic averaged over all subjects
     """
-    avg_matrix, rois = _get_conn_mat_subject(epic=epic, subject=SUBJECTS[0])
+    avg_matrix, rois = _get_conn_mat_subject(epic=epic, subject=subjects[0], **kwargs)
     avg_matrix = np.zeros(avg_matrix.shape)
-    for subject in SUBJECTS:
-        connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject)
+    for subject in subjects:
+        connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject, **kwargs)
         avg_matrix += connectivity_matrix
-    avg_matrix /= len(SUBJECTS)
+    avg_matrix /= len(subjects)
     return avg_matrix, rois

@@ -17,11 +17,11 @@ def ttests(df):
         return make_ttests(df, save=True)
 
 
-def make_ttests(df, save: bool):
+def make_ttests(df, save: bool, between='epoch'):
     # todo bad smell. no need to involve seed conn when making ttests
     df_grouped, index = _prepare_for_seed_conn(df)
     print('Computing t-tests...')
-    df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between='epic',
+    df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between=between,
                                                   subject='subject', padjust=FDR_method)
     df_stats_pairwise = df_stats_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]
     df_stats_pairwise = df_stats_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})

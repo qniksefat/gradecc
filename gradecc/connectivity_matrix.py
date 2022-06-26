@@ -9,8 +9,8 @@ from gradecc.load_timeseries.utils import SUBJECTS
 from gradecc.utils.filenames import dir_images
 
 
-def plot_conn_mat(epic: str, subject=None, significant_regions=True, output_file=None, **kwargs):
-    connectivity_matrix, regions = get_conn_mat(epic, subject, **kwargs)
+def plot_conn_mat(epoch: str, subject=None, significant_regions=True, output_file=None, **kwargs):
+    connectivity_matrix, regions = get_conn_mat(epoch, subject, **kwargs)
     if significant_regions:
         connectivity_matrix, regions = _mask_conn_mat(connectivity_matrix, regions)
     fig = plt.figure(figsize=(15, 10))
@@ -35,22 +35,22 @@ def _variance_threshold(conn_mat):
     return sd_threshold
 
 
-def get_conn_mat(epic: str, subject: int = None, **kwargs):
+def get_conn_mat(epoch: str, subject: int = None, **kwargs):
     """get connectivity matrix. If subject is None, matrix averaged over all subjects.
     """
     # todo select part of regions
     if subject is not None:
-        connectivity_matrix, regions = _get_conn_mat_subject(epic, subject, **kwargs)
+        connectivity_matrix, regions = _get_conn_mat_subject(epoch, subject, **kwargs)
     else:
-        connectivity_matrix, regions = _get_conn_mat_averaged(epic, **kwargs)
+        connectivity_matrix, regions = _get_conn_mat_averaged(epoch, **kwargs)
     return connectivity_matrix, regions
 
 
-def _get_conn_mat_subject(epic: str, subject: int, **kwargs):
-    """connectivity matrix within an epic for a subject
+def _get_conn_mat_subject(epoch: str, subject: int, **kwargs):
+    """connectivity matrix within an epoch for a subject
     """
     include_subc = kwargs.get('include_subcortex', INCLUDE_SUBC)
-    timeseries = load_ts(epic=epic, subject=subject, include_subcortex=include_subc)
+    timeseries = load_ts(epoch=epoch, subject=subject, include_subcortex=include_subc)
     regions = timeseries.columns.tolist()
     timeseries = timeseries.to_numpy()
     correlation_measure = ConnectivityMeasure(kind='correlation')
@@ -60,13 +60,13 @@ def _get_conn_mat_subject(epic: str, subject: int, **kwargs):
     return connectivity_matrix, regions
 
 
-def _get_conn_mat_averaged(epic: str, subjects=SUBJECTS, **kwargs):
-    """connectivity matrix for an epic averaged over all subjects
+def _get_conn_mat_averaged(epoch: str, subjects=SUBJECTS, **kwargs):
+    """connectivity matrix for an epoch averaged over all subjects
     """
-    avg_matrix, rois = _get_conn_mat_subject(epic=epic, subject=subjects[0], **kwargs)
+    avg_matrix, rois = _get_conn_mat_subject(epoch=epoch, subject=subjects[0], **kwargs)
     avg_matrix = np.zeros(avg_matrix.shape)
     for subject in subjects:
-        connectivity_matrix, _ = _get_conn_mat_subject(epic=epic, subject=subject, **kwargs)
+        connectivity_matrix, _ = _get_conn_mat_subject(epoch=epoch, subject=subject, **kwargs)
         avg_matrix += connectivity_matrix
     avg_matrix /= len(subjects)
     return avg_matrix, rois

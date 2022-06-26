@@ -10,7 +10,7 @@ from gradecc.utils.filenames import labels_filename
 
 
 # todo cortex and subcortex
-def plot():
+def plot_brain():
     pass
 
 
@@ -70,7 +70,3 @@ def _plot_brain_masked(data, value: str, mask: str, **kwargs):
     significance = np.array(mask) < kwargs.get('threshold', ALPHA)
     data['plot_value'] = np.where(significance, np.array(value), 0)
     _plot_cortex(data, 'plot_value', **kwargs)
-
-
-if __name__ == '__main__':
-    pass

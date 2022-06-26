@@ -18,18 +18,6 @@ def make_behaviour():
     return df_behaviour_
 
 
-df_behaviour = make_behaviour()
-
-subjects_match = pd.read_csv(subjects_filename, delimiter='\t')
-subjects_match = subjects_match[subjects_match.exclude == False]
-
-
-# is `Score` the best measure? todo get path trace to try others
-#  PCA on score instead of mere average agg
-
-# maybe cluster subjects here. eg, based on average of last trials
-
-
 # todo learn what to do with many params
 def agg_metric(df, window='first', metric='Score', rename=None,
                score_window=20, block=2, agg='mean'):
@@ -49,7 +37,7 @@ def agg_metric(df, window='first', metric='Score', rename=None,
         .rename(rename)
 
 
-def make_metrics(df=df_behaviour):
+def make_metrics(df):
     metrics_ = pd.concat(
         [
             agg_metric(df, agg='median', window='first'),
@@ -71,8 +59,6 @@ def make_metrics(df=df_behaviour):
     return metrics_
 
 
-metrics = make_metrics()
-
 # they were metrics. Now, measures as features.
 def make_measures():
     # merged with subject (str)
@@ -92,16 +78,8 @@ def make_measures():
     return df_measures_extended_
 
 
-df_measures_extended = make_measures()
-
-
 def corr(data, a, b):
     return pearsonr(data[a], data[b])
-
-
-df_metrics = df_measures_extended.merge(metrics.reset_index(), how='inner',
-                                        left_on='dicom_dir', right_on='Subject')
-df_metrics
 
 
 def _expand_p_r(df, metric):
@@ -111,7 +89,7 @@ def _expand_p_r(df, metric):
     )
 
 
-def make_correlations(df=df_metrics):
+def make_correlations(df):
     df_corr_list = []
     for metric in metrics.columns:
         df_corr_ = df.groupby(['epoch_', 'measure', 'region']).apply(corr, 'value', metric)
@@ -122,12 +100,8 @@ def make_correlations(df=df_metrics):
     return df_correlations
 
 
-df_corr = make_correlations()
-
 # todo make function to match by index
-
-
-def plot_behaviour_corr(metric, df=df_corr, epochs_=None, measures=None):
+def plot_behaviour_corr(df, metric, epochs_=None, measures=None):
     if epochs_ is None:
         epochs_ = ['baseline', 'early', 'late']
     if measures is None:
@@ -153,20 +127,6 @@ def plot_behaviour_corr(metric, df=df_corr, epochs_=None, measures=None):
                       )
 
 
-plot_behaviour_corr(metric='Score_median_first20',
-                    epochs_=['e2l'], measures=['eccentricity'])
-
-# for m in ['Score_median_first20', 'Score_median_last20', 'Score_median_diff20', 'Score_std_baseline']:
-#     _plot_behaviour_corr(metric=m, measures=['eccentricity'],
-#         epochs_=['baseline', 'early', 'late', 'b2e', 'e2l'])
-
-
-# todo apply FDR
-
-
-# correlation between scores
-
-
 def make_cross_behaviour():
     cross_list = []
     for metric in ['Score_median_first20', 'Score_median_last20', 'Score_median_diff20', ]:
@@ -175,7 +135,35 @@ def make_cross_behaviour():
             .groupby('region').apply(corr, 'Score_std_baseline', metric)
         cross_list.append(_expand_p_r(df_cross_, metric))
     df_cross = pd.concat(cross_list, axis=1, join="outer", ignore_index=False, )
-    return df_cross.iloc[0] # todo fix
+    # todo fix
+    return df_cross.iloc[0].rename('Score_std_baseline')
 
 
-df_cross = make_cross_behaviour()
+if __name__ == '__main__':
+    df_behaviour = make_behaviour()
+
+    subjects_match = pd.read_csv(subjects_filename, delimiter='\t')
+    subjects_match = subjects_match[subjects_match.exclude == False]
+
+    # is `Score` the best measure? todo get path trace to try others
+    #  todo PCA on score instead of mere average agg.
+    # maybe cluster subjects here. eg, based on average of last trials
+
+    metrics = make_metrics(df_behaviour)
+    df_measures_extended = make_measures()
+    df_metrics = df_measures_extended.merge(metrics.reset_index(), how='inner',
+                                            left_on='dicom_dir', right_on='Subject')
+
+    df_corr = make_correlations(df_metrics)
+    plot_behaviour_corr(df_corr, metric='Score_median_first20',
+                        epochs_=['e2l'], measures=['eccentricity'])
+
+    # for m in ['Score_median_first20', 'Score_median_last20', 'Score_median_diff20', 'Score_std_baseline']:
+    #     _plot_behaviour_corr(metric=m, measures=['eccentricity'],
+    #         epochs_=['baseline', 'early', 'late', 'b2e', 'e2l'])
+
+    # todo apply FDR
+
+    print('correlation between behavioural metrics \n',
+          make_cross_behaviour())
+

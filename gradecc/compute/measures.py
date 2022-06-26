@@ -11,30 +11,30 @@ tqdm.pandas()
 
 
 # todo decorator cache
-def get_measures(measures=None, epic_list=None,
+def get_measures(measures=None, epoch_list=None,
                  subjects=SUBJECTS) -> pd.DataFrame:
     """get measures for a brain region
     Args:
-        epic_list: list of epics such as `baseline`
+        epoch_list: list of epochs such as `baseline`
         measures (list): different measures such as gradients or eccentricity
         subjects (list): if not specified, default to all subjects
     Returns:
-        pd.DataFrame: measures corresponding to each region, subject, epic
+        pd.DataFrame: measures corresponding to each region, subject, epoch
     """
-    epic_list, measures, subjects = _init_inputs(epic_list, measures, subjects)
+    epoch_list, measures, subjects = _init_inputs(epoch_list, measures, subjects)
 
     if file_exists(measures_filename):
         print('Reading data from', measures_filename)
         df = pd.read_csv(measures_filename)
-        return df[(df.measure.isin(measures)) &
-                  (df.subject.isin(subjects)) &
-                  (df.epic.isin(epic_list))]
+        return df[(df['measure'].isin(measures)) &
+                  (df['subject'].isin(subjects)) &
+                  (df['epoch'].isin(epoch_list))]
     else:
         make_measures()
-        return get_measures(measures=measures, epic_list=epic_list, subjects=subjects)
+        return get_measures(measures=measures, epoch_list=epoch_list, subjects=subjects)
 
 
-def _init_inputs(epic_list, measures, subjects):
+def _init_inputs(epoch_list, measures, subjects):
     if measures is None:
         measures = _make_measures_list()
     elif not isinstance(measures, list):
@@ -45,12 +45,12 @@ def _init_inputs(epic_list, measures, subjects):
     elif not isinstance(subjects, list):
         subjects = [subjects]
 
-    if epic_list is None:
-        epic_list = ['baseline', 'early', 'late']
-    elif not isinstance(epic_list, list):
-        epic_list = [epic_list]
+    if epoch_list is None:
+        epoch_list = ['baseline', 'early', 'late']
+    elif not isinstance(epoch_list, list):
+        epoch_list = [epoch_list]
 
-    return epic_list, measures, subjects
+    return epoch_list, measures, subjects
 
 
 def _make_measures_list():
@@ -58,10 +58,10 @@ def _make_measures_list():
 
 
 # todo cache make_measures
-def make_measures(epic_list=None, subjects=SUBJECTS):
-    if epic_list is None:
-        epic_list = ['baseline', 'early', 'late']
-    df_gradients = make_gradients(epic_list=epic_list, subjects=subjects)
+def make_measures(epoch_list=None, subjects=SUBJECTS):
+    if epoch_list is None:
+        epoch_list = ['baseline', 'early', 'late']
+    df_gradients = make_gradients(epoch_list=epoch_list, subjects=subjects)
     df_ecc = _make_eccentricity(df_gradients)
     df_measures = pd.concat([df_gradients, df_ecc], axis=0)
     df_measures.to_csv(measures_filename, index=False)
@@ -79,18 +79,17 @@ def _make_eccentricity(df):
     print('Making eccentricity...')
     eccentricity = df \
         .assign(v=lambda r: r['value'] ** 2, aixs=1) \
-        .groupby(['subject', 'epic', 'region']).agg({'v': sum}) \
+        .groupby(['subject', 'epoch', 'region']).agg({'v': sum}) \
         .v.progress_apply(np.sqrt).reset_index() \
         .rename(columns={'v': 'value'})
     eccentricity['measure'] = 'eccentricity'
     return eccentricity
 
 
-def get_measures_avg(epic_list=None, measures=None,
+def get_measures_avg(epoch_list=None, measures=None,
                      subjects=SUBJECTS) -> pd.DataFrame:
-    # todo handle non valid inputs like laate. NOT important; remove these all at once
-    values = get_measures(measures, epic_list, subjects)
-    values = values.groupby(['region', 'epic', 'measure']) \
+    values = get_measures(measures, epoch_list, subjects)
+    values = values.groupby(['region', 'epoch', 'measure']) \
         .mean().drop('subject', axis=1) \
         .reset_index()
     return values

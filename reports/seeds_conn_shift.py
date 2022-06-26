@@ -1,7 +1,7 @@
 import operator
 
 from gradecc.compute.measures import get_measures
-from gradecc.plot import plot_cortex
+from gradecc.plot import plot_cortex, plot_subc
 from gradecc.stats import rm_anova
 from gradecc.stats.pairwise_ttests import seed_ttests
 from gradecc.seed_conn import seed_connectivity
@@ -18,29 +18,34 @@ def _find_seeds():
 
     sig_regions = df_stats_ecc[df_stats_ecc.fdr_significant == True].region.tolist()
     # spotted by eyes
-    regions_of_interest = [1, 4, 7, 15, 17, 20, 27, 30, 45]
+    # regions_of_interest = [1, 4, 7, 15, 17, 20, 27, 30, 45]
+    regions_of_interest = [1, 4]
     regions_of_interest = operator.itemgetter(*regions_of_interest)(sig_regions)
-    return regions_of_interest
+    return list(regions_of_interest)
 
 
 def _plot_shifts(seeds):
-    global sample_region
-    for sample_region in seeds:
-        df_seed = seed_connectivity(sample_region)
+    for seed in seeds:
+        # pass seeds to seed_connectivity
+        df_seed = seed_connectivity(seed)
         df_seed_shift = seed_ttests(df_seed)
 
         for pair in df_seed_shift.index.unique():
-            text = sample_region[10:] + ' seed ' + pair[0][0].upper() + ' to ' + pair[1][0].upper()
+            text = seed[10:] + ' seed ' + pair[0][0].upper() + ' to ' + pair[1][0].upper()
+            # todo make plot_brain
             plot_cortex(df_seed_shift.loc[pair], 'tstat',
-                        text=text, color_range=(-4, 4), color_map='bwr', layout='grid',
+                        text=('cortex ' + text), color_range=(-4, 4), color_map='bwr', layout='grid',
                         save_figure=True)
+
+            plot_subc(df_seed_shift.loc[pair], 'tstat',
+                      text=('subc ' + text), color_range=(-4, 4), color_map='bwr')
 
 
 if __name__ == '__main__':
     regions_of_interest = _find_seeds()
 
-    for sample_region in regions_of_interest:
-        plot_cortex(spot_region(sample_region), layout='grid',
-                    text=sample_region[10:], as_outline=True, save_figure=True)
+    for region in regions_of_interest:
+        plot_cortex(spot_region(region), layout='grid',
+                    text=region[10:], as_outline=True, save_figure=True)
 
     _plot_shifts(regions_of_interest)

@@ -40,7 +40,7 @@ def _handle_df_series(data, value):
             return data.set_index('region')[value]
 
 
-def plot_subc(data, value='value', **kwargs):
+def plot_subcortex(data, value='value', **kwargs):
     data = _handle_df_series(data, value)
     data = _sort_re_enigma_order(data)
     _enigma_plot(data, value, **kwargs)
@@ -48,9 +48,9 @@ def plot_subc(data, value='value', **kwargs):
 
 if __name__ == '__main__':
     value = 'value'
-    from gradecc.load_timeseries import load_ts_subc
+    from gradecc.load_data import load_ts_subc
 
     a = load_ts_subc(1, 'rest').var(axis=0)
 
     a = a.rename(value).rename_axis('region')
-    plot_subc(a)
+    plot_subcortex(a)

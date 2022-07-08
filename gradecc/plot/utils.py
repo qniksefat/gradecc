@@ -2,7 +2,7 @@ import nibabel as nib
 import pandas as pd
 from brainspace.datasets import load_conte69
 
-from gradecc.load_timeseries import all_region_names
+from gradecc.load_data import all_region_names
 from gradecc.utils.filenames import atlas_filename
 
 nib.imageglobals.logger.level = 40

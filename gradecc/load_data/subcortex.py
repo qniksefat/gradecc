@@ -1,9 +1,10 @@
 from os import path
 import pandas as pd
+
 from gradecc.utils.filenames import subjects_filename, dir_subcortical, atlas_subc_filename
-from gradecc.load_timeseries.utils import _window_timeseries, EPOCH_FILENAME_SUBC
 
 
+# todo decide: perhaps deprecated
 def _handle_if_subject_id(subject) -> str:
     """
     Args:
@@ -11,6 +12,7 @@ def _handle_if_subject_id(subject) -> str:
     Returns:
         subject str as it's saved
     """
+    # todo move it such that it works for cortex too
     if isinstance(subject, str):
         return subject
     elif isinstance(subject, int):
@@ -18,11 +20,10 @@ def _handle_if_subject_id(subject) -> str:
         subject = subjects_match.loc[subjects_match.participant_id == subject, 'dicom_dir']
         subject = subject.values[0]
         return subject
-    # todo raise type exception
 
 
 def _make_subc_filename(subject: str, epoch):
-    filename = subject + '_' + EPOCH_FILENAME_SUBC[epoch] + '.csv'
+    filename = subject + '_' + EPOCH_FILENAME_SUBCORTEX[epoch] + '.csv'
     return path.join(dir_subcortical, filename)
 
 
@@ -33,15 +34,5 @@ def _rename_columns_to_region_names(ts_subc):
     return ts_subc
 
 
-def load_ts_subc(subject, epoch: str) -> pd.DataFrame:
-    """ loads timeseries for subcortical regions
-    """
-    subject: str = _handle_if_subject_id(subject)
-    subject_filename = _make_subc_filename(subject, epoch)
-    ts_subc = pd.read_csv(subject_filename)
-    ts_subc = _rename_columns_to_region_names(ts_subc)
-    return _window_timeseries(epoch, ts_subc)
-
-
-if __name__ == '__main__':
-    load_ts_subc(1, 'rest')
+EPOCH_FILENAME_SUBCORTEX = {'rest': 'Rest_Rest', 'baseline': 'RL_Baseline',
+                            'learning': 'RL_Learning', 'early': 'RL_Learning', 'late': 'RL_Learning'}

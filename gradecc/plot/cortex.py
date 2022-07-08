@@ -5,7 +5,7 @@ import numpy as np
 from gradecc.plot.utils import ATLAS, _init_atlas
 from gradecc.plot._surfplot import _surf_plot
 from gradecc.stats.utils import ALPHA
-from gradecc.utils.utils import melt_df
+from gradecc.utils import melt_df
 from gradecc.utils.filenames import labels_filename
 
 

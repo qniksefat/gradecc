@@ -3,8 +3,8 @@ import numpy as np
 from tqdm import tqdm
 
 from gradecc.compute.gradient import make_gradients, NUM_COMPONENTS
-from gradecc.load_timeseries.utils import SUBJECTS
-from gradecc.utils.utils import file_exists
+from gradecc.load_data.subject import SUBJECTS_INT
+from gradecc.utils import file_exists
 from gradecc.utils.filenames import measures_filename
 
 tqdm.pandas()
@@ -12,7 +12,7 @@ tqdm.pandas()
 
 # todo decorator cache
 def get_measures(measures=None, epoch_list=None,
-                 subjects=SUBJECTS) -> pd.DataFrame:
+                 subjects=SUBJECTS_INT) -> pd.DataFrame:
     """get measures for a brain region
     Args:
         epoch_list: list of epochs such as `baseline`
@@ -41,7 +41,7 @@ def _init_inputs(epoch_list, measures, subjects):
         measures = [measures]
 
     if subjects is None:
-        subjects = SUBJECTS
+        subjects = SUBJECTS_INT
     elif not isinstance(subjects, list):
         subjects = [subjects]
 
@@ -58,7 +58,7 @@ def _make_measures_list():
 
 
 # todo cache make_measures
-def make_measures(epoch_list=None, subjects=SUBJECTS):
+def make_measures(epoch_list=None, subjects=SUBJECTS_INT):
     if epoch_list is None:
         epoch_list = ['baseline', 'early', 'late']
     df_gradients = make_gradients(epoch_list=epoch_list, subjects=subjects)
@@ -87,7 +87,7 @@ def _make_eccentricity(df):
 
 
 def get_measures_avg(epoch_list=None, measures=None,
-                     subjects=SUBJECTS) -> pd.DataFrame:
+                     subjects=SUBJECTS_INT) -> pd.DataFrame:
     values = get_measures(measures, epoch_list, subjects)
     values = values.groupby(['region', 'epoch', 'measure']) \
         .mean().drop('subject', axis=1) \

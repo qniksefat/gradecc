@@ -3,7 +3,7 @@ import pingouin as pg
 
 from gradecc.stats.utils import FDR_method
 from gradecc.utils.filenames import ttests_filename
-from gradecc.utils.utils import file_exists, melt_df
+from gradecc.utils import melt_df, file_exists
 
 
 def ttests(df):

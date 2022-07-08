@@ -1,5 +1,5 @@
 from gradecc.compute.measures import get_measures_avg
-from gradecc.plot import plot_cortex, plot_subc
+from gradecc.plot import plot_cortex, plot_subcortex
 
 
 def plot_measure(measures):
@@ -16,9 +16,9 @@ def plot_measure(measures):
                         text=('cortical avg ' + m + ' ' + epoch.upper()),
                         save_figure=True)
 
-            plot_subc(grad_data, color_map=color_map.get(m, 'bwr'),
-                      color_range=color_range.get(('subc', m), (-.5, .5)),
-                      text=('subcortical avg ' + m + ' ' + epoch.upper()))
+            plot_subcortex(grad_data, color_map=color_map.get(m, 'bwr'),
+                           color_range=color_range.get(('subc', m), (-.5, .5)),
+                           text=('subcortical avg ' + m + ' ' + epoch.upper()))
 
 
 if __name__ == '__main__':

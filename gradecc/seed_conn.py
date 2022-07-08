@@ -2,16 +2,16 @@ import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
 
-from gradecc.load_timeseries import load_ts
-from gradecc.load_timeseries.utils import SUBJECTS
-from gradecc.load_timeseries import all_region_names
+from gradecc.load_data import load_ts
+from gradecc.load_data.subject import SUBJECTS_INT
+from gradecc.load_data import all_region_names
 
 
 def seed_connectivity(seed_regions, epoch_list=None):
     epoch_list, seed_regions = _init_inputs_seed_conn(epoch_list, seed_regions)
     df_seed = pd.DataFrame()
     for epoch in epoch_list:
-        for subject in SUBJECTS:
+        for subject in SUBJECTS_INT:
             for seed_region in seed_regions:
                 _df = _compute_seed_conn(seed_region, subject, epoch)
                 df_seed = pd.concat([df_seed, _df], axis=0)

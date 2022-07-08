@@ -3,10 +3,10 @@ import pandas as pd
 from tqdm import tqdm
 
 from gradecc.compute.gradient import _make_reference_gradient, _make_subject_gradients
-from gradecc.load_timeseries.utils import SUBJECTS
+from gradecc.load_data.subject import SUBJECTS_INT
 
 
-def variance_explained(epoch_list=None, subjects=SUBJECTS,
+def variance_explained(epoch_list=None, subjects=SUBJECTS_INT,
                        reference_epoch='baseline', cum_sum=True
                        ) -> pd.DataFrame:
     """ the ratio of variance, explained by each principal component. for all epochs.

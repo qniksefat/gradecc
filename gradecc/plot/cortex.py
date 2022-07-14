@@ -5,7 +5,6 @@ import numpy as np
 from gradecc.plot.utils import ATLAS, _init_atlas
 from gradecc.plot._surfplot import _surf_plot
 from gradecc.stats.utils import ALPHA
-from gradecc.utils import melt_df
 from gradecc.utils.filenames import labels_filename
 
 
@@ -43,11 +42,8 @@ def _handle_df_series(data, value):
     if isinstance(data, pd.Series):
         return data.rename(value).rename_axis('region')
     elif isinstance(data, pd.DataFrame):
-        if 'region' in data.columns:
-            return data.set_index('region')[value]
-        else:
-            # should not work
-            return melt_df(data)
+        assert 'region' in data.columns
+        return data.set_index('region')[value]
     # todo except with type input error
 
 

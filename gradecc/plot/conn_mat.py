@@ -3,14 +3,28 @@ import numpy as np
 from matplotlib import pyplot as plt
 from nilearn import plotting
 
-from gradecc.compute.conn_mat import get_conn_mat
+from gradecc.compute.conn_mat import ConnectivityMatrixMean, ConnectivityMatrix
+from gradecc.load_data import Timeseries
+from gradecc.load_data.subject import SUBJECTS_INT
 from gradecc.utils.filenames import dir_images
 
 
 def plot_conn_mat(epoch: str, subject=None, significant_regions=True, output_file=None, **kwargs):
-    connectivity_matrix, regions = get_conn_mat(epoch, subject, **kwargs)
+    if subject is None:
+        ts = Timeseries(subject_id=SUBJECTS_INT[0], epoch=epoch)
+        connectivity_matrix = ConnectivityMatrixMean(epoch=epoch)
+        regions = ts.region_names
+    else:
+        ts = Timeseries(subject_id=subject, epoch=epoch)
+        connectivity_matrix = ConnectivityMatrix(timeseries=ts)
+        regions = ts.region_names
+
+    connectivity_matrix.load()
+    connectivity_matrix = connectivity_matrix.data
+
     if significant_regions:
         connectivity_matrix, regions = _mask_conn_mat(connectivity_matrix, regions)
+
     fig = plt.figure(figsize=(15, 10))
     plotting.plot_matrix(connectivity_matrix, labels=regions,
                          reorder=kwargs.get('reorder', True),

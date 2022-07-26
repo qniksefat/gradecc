@@ -1,16 +1,5 @@
-import pandas as pd
-
-from gradecc.load_data import all_region_names
-
-
-def melt_df(df):
-    df.columns = all_region_names()
-    df = pd.melt(df.reset_index(),
-                 id_vars=['seed_region', 'epoch', 'subject'],
-                 value_vars=list(df.columns),
-                 var_name='region', value_name='value')
-    return df
+from os import path
 
 
 def file_exists(filename):
-    return os.path.isfile(filename)
+    return path.isfile(filename)

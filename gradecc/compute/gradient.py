@@ -2,16 +2,17 @@ import pandas as pd
 from brainspace.gradient import GradientMaps
 from tqdm import tqdm
 
-from gradecc.load_timeseries.utils import SUBJECTS
-from gradecc.connectivity_matrix import get_conn_mat
+from gradecc.load_data.subject import SUBJECTS_INT
+from gradecc.compute.conn_mat import get_conn_mat
 
 NUM_COMPONENTS = 4
 SPARSITY = 0.9
 # can be a class variable, also not a semantically global var. what is it?
 
 
-def make_gradients(epoch_list=None, subjects=SUBJECTS,
-                   num_components=NUM_COMPONENTS, reference_epoch='baseline',
+def make_gradients(epoch_list=None, subjects=SUBJECTS_INT,
+                   num_components=NUM_COMPONENTS,
+                   reference_epoch='baseline',  # todo change to `rest`
                    ) -> pd.DataFrame:
     if epoch_list is None:
         epoch_list = ['baseline', 'early', 'late']

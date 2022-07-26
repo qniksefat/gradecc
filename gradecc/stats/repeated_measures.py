@@ -3,7 +3,7 @@ import pingouin as pg
 
 from gradecc.stats.false_discovery import _fdr_correction
 from gradecc.utils.filenames import rm_anova_filename
-from gradecc.utils.utils import file_exists
+from gradecc.utils import file_exists
 
 
 def rm_anova(df=None):

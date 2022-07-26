@@ -1,7 +1,7 @@
 from gradecc.compute.measures import get_measures
 from gradecc.stats.repeated_measures import rm_anova
 from gradecc.stats.pairwise_ttests import ttests
-from gradecc.plot import plot_cortex, plot_subc
+from gradecc.plot import plot_cortex, plot_subcortex
 
 
 def prepare_data():
@@ -20,9 +20,9 @@ def _plot_rm_anova_regions():
                 text='cortical ecc rm-anova FDR-cor', save_figure=True
                 )
 
-    plot_subc(df_stats_ecc, 'F', color_range=None,
-              text='subcortical ecc rm-anova',
-              )
+    plot_subcortex(df_stats_ecc, 'F', color_range=None,
+                   text='subcortical ecc rm-anova',
+                   )
 
     print('Number of significant regions:', df_stats_ecc.fdr_significant.sum())
     print('Regions of interest:',
@@ -40,8 +40,8 @@ def _plot_ttests(mask_FDR=False):
         plot_cortex(df_ecc_pairs.loc[pair], 'tstat',
                     text='cortical ' + text, color_range=(-4, 4), color_map='bwr', layout='grid', save_figure=True)
 
-        plot_subc(df_ecc_pairs.loc[pair], 'tstat',
-                  text='subcortical ' + text, color_range=(-2, 2), color_map='bwr')
+        plot_subcortex(df_ecc_pairs.loc[pair], 'tstat',
+                       text='subcortical ' + text, color_range=(-2, 2), color_map='bwr')
 
     if mask_FDR:
         pair = ('baseline', 'early')

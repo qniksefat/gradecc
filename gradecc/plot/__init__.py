@@ -1,2 +1,2 @@
-from .plot_cortex import plot_cortex
-from .plot_subcortex import plot_subc
+from .cortex import plot_cortex
+from .subcortex import plot_subcortex

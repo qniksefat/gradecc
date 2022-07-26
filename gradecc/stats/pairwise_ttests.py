@@ -1,9 +1,9 @@
 import pandas as pd
 import pingouin as pg
 
-from gradecc.stats.utils import FDR_method
+from gradecc.stats.utils import FDR_method, melt_df
 from gradecc.utils.filenames import ttests_filename
-from gradecc.utils.utils import file_exists, melt_df
+from gradecc.utils import file_exists
 
 
 def ttests(df):

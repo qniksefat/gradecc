@@ -1,9 +1,19 @@
-from gradecc.load_timeseries import load_ts
-from gradecc.connectivity_matrix import plot_conn_mat
+from gradecc.load_data import Timeseries
+from gradecc.plot.conn_mat import plot_conn_mat
+from gradecc.compute.conn_mat import ConnectivityMatrix, ConnectivityMatrixMean
 
 if __name__ == '__main__':
-    print('timeseries data',
-          load_ts(subject=1, epoch='rest', include_subcortex=True))
+    ts = Timeseries(subject_id='AB1', epoch='rest', include_subcortex=True)
+    # ts.load()
+    # print('timeseries data', ts.data)
+    #
+    c = ConnectivityMatrix(ts)
+    # c.load()
+    # print('', c.data.shape)
+    #
+    c1 = ConnectivityMatrixMean(epoch='rest')
+    # c1.load()
+    # print(c1.data)
 
-    plot_conn_mat(epoch='late', include_subcortex=True, reorder=True, significant_regions=True, output_file='late epoch')
+    plot_conn_mat(c, reorder=True, significant_regions=True, output_filename='asdfasdf')
 

@@ -1,7 +1,7 @@
 import operator
 
 from gradecc.compute.measures import get_measures
-from gradecc.plot import plot_cortex, plot_subc
+from gradecc.plot import plot_cortex, plot_subcortex
 from gradecc.stats import rm_anova
 from gradecc.stats.pairwise_ttests import seed_ttests
 from gradecc.seed_conn import seed_connectivity
@@ -37,8 +37,8 @@ def _plot_shifts(seeds):
                         text=('cortex ' + text), color_range=(-4, 4), color_map='bwr', layout='grid',
                         save_figure=True)
 
-            plot_subc(df_seed_shift.loc[pair], 'tstat',
-                      text=('subc ' + text), color_range=(-4, 4), color_map='bwr')
+            plot_subcortex(df_seed_shift.loc[pair], 'tstat',
+                           text=('subc ' + text), color_range=(-4, 4), color_map='bwr')
 
 
 if __name__ == '__main__':

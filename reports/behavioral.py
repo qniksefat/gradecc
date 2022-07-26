@@ -2,18 +2,17 @@ from os import path
 import pandas as pd
 from scipy.stats import pearsonr
 
-from gradecc.utils.filenames import data_outside
-from gradecc.utils.filenames import subjects_filename
+from gradecc.utils.filenames import data_outside, subjects_filename
 from gradecc.compute.measures import get_measures
-from gradecc.plot import plot_subc, plot_cortex
+from gradecc.plot import plot_subcortex, plot_cortex
 
 
 def make_behaviour():
     df_behaviour_ = pd.read_csv(path.join(data_outside, 'RL_behavior.csv'))
-    # J's comments. try removing zeros
+    # J's comments. try removing zeros V having zeros
     # how they're distributed through time. and for subjects
     df_behaviour_ = df_behaviour_[df_behaviour_.Score > 0]
-    df_behaviour_ = df_behaviour_[df_behaviour_.Subject != 'CS1']
+    df_behaviour_ = df_behaviour_[df_behaviour_['subject'] != 'CS1']
     # or set `CS1` first scores to zero
     return df_behaviour_
 
@@ -60,10 +59,10 @@ def make_metrics(df):
 
 
 # they were metrics. Now, measures as features.
-def make_measures():
+def make_measures(subjects):
     # merged with subject (str)
     df_measures = get_measures()
-    df_measures = df_measures.merge(subjects_match, left_on='subject', right_on='participant_id')
+    df_measures = df_measures.merge(subjects, left_on='subject', right_on='participant_id')
     df_ecc_diff = df_measures[df_measures.measure == 'eccentricity'] \
         .pivot(columns='epoch', values='value',
                index=['region', 'measure', 'dicom_dir']).reset_index()
@@ -121,10 +120,10 @@ def plot_behaviour_corr(df, metric, epochs_=None, measures=None):
                         save_figure=True
                         )
 
-            plot_subc(data, value=('r_' + metric),
-                      color_map='bwr', color_range=color_range,
-                      text=('subcortical ' + text),
-                      )
+            plot_subcortex(data, value=('r_' + metric),
+                           color_map='bwr', color_range=color_range,
+                           text=('subcortical ' + text),
+                           )
 
 
 def make_cross_behaviour():
@@ -150,7 +149,7 @@ if __name__ == '__main__':
     # maybe cluster subjects here. eg, based on average of last trials
 
     metrics = make_metrics(df_behaviour)
-    df_measures_extended = make_measures()
+    df_measures_extended = make_measures(subjects_match)
     df_metrics = df_measures_extended.merge(metrics.reset_index(), how='inner',
                                             left_on='dicom_dir', right_on='Subject')
 
@@ -166,4 +165,3 @@ if __name__ == '__main__':
 
     print('correlation between behavioural metrics \n',
           make_cross_behaviour())
-

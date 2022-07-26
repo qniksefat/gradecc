@@ -1,11 +1,13 @@
+import typing
+
 import pandas as pd
 
-from gradecc.load_data.subcortex import (_handle_if_subject_id,
-                                         _make_subc_filename,
-                                         _rename_columns_to_region_names)
 from gradecc.load_data.subject import Subject
 from gradecc.load_data.utils import window_timeseries
 from gradecc.load_data.cortex import try_load_filenames
+from gradecc.load_data.subcortex import (_handle_if_subject_id,
+                                         _make_subc_filename,
+                                         _rename_columns_to_region_names)
 
 
 def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
@@ -16,16 +18,13 @@ def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
 
 
 class Timeseries:
-    def __init__(self, subject_id: str | int, epoch: str, include_subcortex=True):
+    def __init__(self, subject_id: typing.Union[str, int], epoch: str, include_subcortex=True):
         # todo q: where to define type? in params or when casting
         self.subject = Subject(subject_id)
         self.epoch: str = epoch
         self.include_subcortex: bool = include_subcortex
         self.data: pd.DataFrame = pd.DataFrame()
         self.region_names = None
-        self.load()
-        self.load_region_names()
-
     # todo feature: if epoch is `whole`, combine all
 
     def load(self):
@@ -62,8 +61,5 @@ class Timeseries:
 
 def all_region_names(include_subcortex=True) -> list:
     ts = Timeseries(1, 'rest', include_subcortex)
+    ts.load()
     return ts.data.columns.tolist()
-
-
-if __name__ == '__main__':
-    pass

@@ -7,10 +7,12 @@ from gradecc.load_data.subject import SUBJECTS_INT
 
 # todo feature: centering https://pyriemann.readthedocs.io/en/latest/index.html
 
-# todo q: classes act a bit different
+# todo q: classes act a bit different.
+# todo: superclass
 class ConnectivityMatrixMean:
     """ connectivity matrix for an epoch averaged over subjects
-    """
+        """
+    # todo: does NOT handle include_subc
 
     def __init__(self, epoch: str, subjects: list[int] = SUBJECTS_INT, kind='correlation'):
         self.epoch = epoch

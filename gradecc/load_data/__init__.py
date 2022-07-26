@@ -35,6 +35,8 @@ class Timeseries:
         else:
             self.data = self._load_ts_cortex()
 
+        self.region_names = self.data.columns.tolist()
+
     def _load_ts_cortex(self) -> pd.DataFrame:
         """ loads timeseries for cortical regions
         Args:
@@ -56,7 +58,7 @@ class Timeseries:
     # todo having TS cortex class that inherits from TS
 
     def load_region_names(self):
-        self.region_names = self.data.columns.tolist()
+        pass
 
 
 def all_region_names(include_subcortex=True) -> list:

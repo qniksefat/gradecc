@@ -1,37 +1,41 @@
 from os import path
+import typing
 import numpy as np
 from matplotlib import pyplot as plt
 from nilearn import plotting
 
 from gradecc.compute.conn_mat import ConnectivityMatrixMean, ConnectivityMatrix
 from gradecc.load_data import Timeseries
-from gradecc.load_data.subject import SUBJECTS_INT
 from gradecc.utils.filenames import dir_images
 
 
-def plot_conn_mat(epoch: str, subject=None, significant_regions=True, output_file=None, **kwargs):
-    if subject is None:
-        ts = Timeseries(subject_id=SUBJECTS_INT[0], epoch=epoch)
-        connectivity_matrix = ConnectivityMatrixMean(epoch=epoch)
-        regions = ts.region_names
+def plot_conn_mat(connectivity_matrix: typing.Union[ConnectivityMatrix, ConnectivityMatrixMean],
+                  significant_regions=True, output_filename=None, **kwargs):
+    connectivity_matrix.load()
+
+    if isinstance(connectivity_matrix, ConnectivityMatrix):
+        regions = connectivity_matrix.timeseries.region_names
     else:
-        ts = Timeseries(subject_id=subject, epoch=epoch)
-        connectivity_matrix = ConnectivityMatrix(timeseries=ts)
+        assert isinstance(connectivity_matrix, ConnectivityMatrixMean)
+
+        sample_subject = connectivity_matrix.subjects[0]
+        assert (isinstance(sample_subject, int) or isinstance(sample_subject, str))
+        ts = Timeseries(sample_subject, epoch=connectivity_matrix.epoch)
+        ts.load()
         regions = ts.region_names
 
-    connectivity_matrix.load()
-    connectivity_matrix = connectivity_matrix.data
+    conn_mat_ndarray = connectivity_matrix.data
 
     if significant_regions:
-        connectivity_matrix, regions = _mask_conn_mat(connectivity_matrix, regions)
+        conn_mat_ndarray, regions = _mask_conn_mat(conn_mat_ndarray, regions)
 
     fig = plt.figure(figsize=(15, 10))
-    plotting.plot_matrix(connectivity_matrix, labels=regions,
+    plotting.plot_matrix(conn_mat_ndarray, labels=regions,
                          reorder=kwargs.get('reorder', True),
                          colorbar=True, vmax=0.8, vmin=-0.8,
                          figure=fig)
-    if output_file:
-        fig.savefig(path.join(dir_images, output_file + '.png'))
+    if output_filename:
+        fig.savefig(path.join(dir_images, output_filename + '.png'))
 
 
 def _mask_conn_mat(conn_mat, regions):

@@ -2,7 +2,7 @@ from gradecc.compute.measures import get_measures_avg
 from gradecc.plot import plot_cortex, plot_subcortex
 
 
-def plot_measure(measures):
+def helper_plot_measure(measures):
     color_range = {('cortex', 'eccentricity'): (0, 4),
         ('subc', 'eccentricity'): (.6, 1)}
     color_map = {'eccentricity': 'viridis'}
@@ -22,5 +22,5 @@ def plot_measure(measures):
 
 
 if __name__ == '__main__':
-    plot_measure(['eccentricity'])
-    plot_measure(['gradient1', 'gradient2'])
+    helper_plot_measure(['eccentricity'])
+    helper_plot_measure(['gradient1', 'gradient2'])

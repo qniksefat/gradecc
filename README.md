@@ -1,5 +1,5 @@
 # gradecc
-Brain Gradients in a Motor Reinforcement Learning task.
+Brain Large-scale manifolds (Gradients) in a Motor Reinforcement Learning task.
 
 ## Task
 

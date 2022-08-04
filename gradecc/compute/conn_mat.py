@@ -16,12 +16,16 @@ class ConnectivityMatrixMean:
 
     def __init__(self, epoch: str, subjects: list[int] = SUBJECTS_INT, kind='correlation'):
         self.epoch = epoch
+        if not isinstance(subjects, list):
+            subjects = [subjects]
         self.subjects = subjects
         self.kind = kind
         self.data = None
+        self.region_names = None
 
     def load(self):
         timeseries_sample = Timeseries(epoch=self.epoch, subject_id=self.subjects[0])
+        self.region_names = timeseries_sample.region_names
         conn_mat_to_init = ConnectivityMatrix(timeseries=timeseries_sample, kind=self.kind)
         conn_mat_to_init.load()
         conn_mat_avg = conn_mat_to_init.data
@@ -43,15 +47,17 @@ class ConnectivityMatrix:
         self.timeseries = timeseries
         self.data = None
         self.kind = kind
+        self.region_names = None
 
     def load(self):
         """connectivity matrix within an epoch for a subject
         """
         self.timeseries.load()
+        self.region_names = self.timeseries.region_names
         timeseries_ndarray = self.timeseries.data.to_numpy()
         correlation_measure = ConnectivityMeasure(kind=self.kind)
         connectivity_matrix = correlation_measure.fit_transform([timeseries_ndarray])[0]
-        np.fill_diagonal(connectivity_matrix, 0)
+        # np.fill_diagonal(connectivity_matrix, 0)
         self.data = connectivity_matrix
 
 
@@ -75,7 +81,7 @@ def compute_conn_mat(timeseries: Timeseries, **kwargs):
     timeseries_ndarray = timeseries.data.to_numpy()
     correlation_measure = ConnectivityMeasure(kind='correlation')
     connectivity_matrix = correlation_measure.fit_transform([timeseries_ndarray])[0]
-    np.fill_diagonal(connectivity_matrix, 0)
+    # np.fill_diagonal(connectivity_matrix, 0)
     return connectivity_matrix, timeseries.region_names
 
 

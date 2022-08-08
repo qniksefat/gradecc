@@ -5,7 +5,7 @@ import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
 
-from gradecc.compute.gradient import _make_reference_gradient, _make_subject_gradients
+from gradecc.compute.gradient import _make_reference_gradient, _make_subject_gradient_model
 from gradecc.load_data.subject import SUBJECTS_INT
 
 from gradecc.utils.filenames import dir_images
@@ -23,9 +23,9 @@ def variance_explained(epoch_list=None, subjects=SUBJECTS_INT,
     print('Computing variance explained...')
     subjects_lambdas = []
     for subject in tqdm(subjects):
-        subject_gradient_model = _make_subject_gradients(subject=subject, epoch_list=epoch_list,
-                                                         gradient_reference=gradient_reference,
-                                                         dim_reduction_approach='pca')
+        subject_gradient_model = _make_subject_gradient_model(subject=subject, epoch_list=epoch_list,
+                                                              gradient_reference=gradient_reference,
+                                                              dim_reduction_approach='pca')
         subjects_lambdas.append(np.stack(subject_gradient_model.lambdas_))
     subjects_lambdas_avg = np.array(subjects_lambdas).mean(axis=0) / num_comp_default
     variance = pd.DataFrame(subjects_lambdas_avg, index=epoch_list,

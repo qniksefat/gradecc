@@ -12,9 +12,10 @@ dir_cache = path.join(data_inside, 'cache/')
 measures_filename = path.join(dir_cache, 'measures.csv')
 ttests_filename = path.join(dir_cache, 'ttests.csv')
 rm_anova_filename = path.join(dir_cache, 'rm_anova.csv')
+dir_conn_mat = path.join(dir_cache, 'conn_mat/')
 
 
-data_outside = '/Users/qasem/Dropbox/JasonANDQasem_SHARED/codes/grad_ecc_RL_data/'
+data_outside = '/Users/qasem/PycharmProjects/grad_ecc_RL_data/'
 dir_dataset = path.join(data_outside, 'RL_dataset_Mar2022/')
 dir_subcortical = path.join(data_outside, 'subcortical_data/subcortical_data2/')
 dir_images = path.join(data_outside, 'output_plots/')

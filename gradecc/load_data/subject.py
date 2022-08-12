@@ -5,7 +5,7 @@ from gradecc.utils.filenames import subjects_filename
 
 def make_subject_id_mapping():
     subject_id_match = pd.read_csv(subjects_filename, delimiter='\t')
-    subject_id_match = subject_id_match[subject_id_match.exclude == False]
+    subject_id_match = subject_id_match[not subject_id_match.exclude]
 
     subject_id_dicts = []
     for key_value in [['participant_id', 'dicom_dir'],
@@ -19,6 +19,7 @@ class Subject:
     _subject_id_mappings = make_subject_id_mapping()
     SUBJECT_ID_INT2STR: dict[int, str] = _subject_id_mappings[0]
     SUBJECT_ID_STR2INT: dict[str, int] = _subject_id_mappings[1]
+    # todo not a Subject attr
 
     def __init__(self, subject_id):
         self._subject_id = subject_id

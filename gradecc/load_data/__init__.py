@@ -9,6 +9,8 @@ from gradecc.load_data.subcortex import (_handle_if_subject_id,
                                          _make_subc_filename,
                                          _rename_columns_to_region_names)
 
+EPOCHS = ['baseline', 'early', 'late']
+
 
 def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
     if ts_cortex.shape[0] == ts_subcortex.shape[0]:
@@ -19,7 +21,7 @@ def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
 
 class Timeseries:
     def __init__(self, subject_id: typing.Union[str, int], epoch: str, include_subcortex=True):
-        # todo q: where to define type? in params or when casting
+        # todo input to Timeseries should be Subject
         self.subject = Subject(subject_id)
         self.epoch: str = epoch
         self.include_subcortex: bool = include_subcortex

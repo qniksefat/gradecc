@@ -5,7 +5,7 @@ from gradecc.utils.filenames import subjects_filename
 
 def make_subject_id_mapping():
     subject_id_match = pd.read_csv(subjects_filename, delimiter='\t')
-    subject_id_match = subject_id_match[not subject_id_match.exclude]
+    subject_id_match = subject_id_match[subject_id_match.exclude == 0]
 
     subject_id_dicts = []
     for key_value in [['participant_id', 'dicom_dir'],
@@ -15,14 +15,17 @@ def make_subject_id_mapping():
     return subject_id_dicts[0], subject_id_dicts[1]
 
 
+_subject_id_mappings = make_subject_id_mapping()
+SUBJECT_ID_INT2STR: dict[int, str] = _subject_id_mappings[0]
+SUBJECT_ID_STR2INT: dict[str, int] = _subject_id_mappings[1]
+SUBJECTS_INT = list(SUBJECT_ID_INT2STR.keys())
+
+
 class Subject:
-    _subject_id_mappings = make_subject_id_mapping()
-    SUBJECT_ID_INT2STR: dict[int, str] = _subject_id_mappings[0]
-    SUBJECT_ID_STR2INT: dict[str, int] = _subject_id_mappings[1]
-    # todo not a Subject attr
 
     def __init__(self, subject_id):
         self._subject_id = subject_id
+        assert isinstance(subject_id, str) or isinstance(subject_id, int)
         self.int = None
         self.str = None
         self.adapt_format_subject_id()
@@ -33,10 +36,11 @@ class Subject:
     def adapt_format_subject_id(self):
         if self.subject_id_is_int():
             self.int = int(self._subject_id)
-            self.str = self.SUBJECT_ID_INT2STR[self.int]
+            self.str = SUBJECT_ID_INT2STR[self.int]
         else:
             self.str = self._subject_id
-            self.int = self.SUBJECT_ID_STR2INT[self.str]
+            self.int = SUBJECT_ID_STR2INT[self.str]
 
 
-SUBJECTS_INT = list(Subject.SUBJECT_ID_INT2STR.keys())
+def includes_all_subjects(subjects: list[Subject]):
+    return set([s.int for s in subjects]) == set(SUBJECTS_INT)

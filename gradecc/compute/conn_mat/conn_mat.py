@@ -1,9 +1,9 @@
 import numpy as np
 from nilearn.connectome import ConnectivityMeasure
 
-from gradecc.compute.store_conn_mat import load_centered_mat
 from gradecc.load_data import Timeseries
 from gradecc.load_data.subject import SUBJECTS_INT
+from load_centered import get_conn_mat_centered
 
 
 # todo q: classes act a bit different.
@@ -60,7 +60,7 @@ class ConnectivityMatrix:
         self.timeseries.load()
         self.region_names = self.timeseries.region_names
         if self.centered:
-            self.data = load_centered_mat(self.timeseries.subject, self.timeseries.epoch)
+            self.data = get_conn_mat_centered(subject=self.timeseries.subject, epoch=self.timeseries.epoch)
         else:
             timeseries_ndarray = self.timeseries.data.to_numpy()
             correlation_measure = ConnectivityMeasure(kind=self.kind)

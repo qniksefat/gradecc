@@ -12,7 +12,6 @@ dir_cache = path.join(data_inside, 'cache/')
 measures_filename = path.join(dir_cache, 'measures.csv')
 ttests_filename = path.join(dir_cache, 'ttests.csv')
 rm_anova_filename = path.join(dir_cache, 'rm_anova.csv')
-dir_conn_mat = path.join(dir_cache, 'conn_mat/')
 
 
 data_outside = '/Users/qasem/PycharmProjects/grad_ecc_RL_data/'

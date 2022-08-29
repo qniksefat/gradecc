@@ -1,4 +1,5 @@
 from os import path
+from joblib import Memory
 
 # keep large data files out of repo to save on GitHub
 data_inside = '/Users/qasem/PycharmProjects/gradients-rl-task/data/'
@@ -18,3 +19,6 @@ data_outside = '/Users/qasem/PycharmProjects/grad_ecc_RL_data/'
 dir_dataset = path.join(data_outside, 'RL_dataset_Mar2022/')
 dir_subcortical = path.join(data_outside, 'subcortical_data/subcortical_data2/')
 dir_images = path.join(data_outside, 'output_plots/')
+
+# To cache big func outputs in disk. Look for @memory.cache in repo.
+memory = Memory(data_outside)

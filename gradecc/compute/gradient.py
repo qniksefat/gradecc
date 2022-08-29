@@ -1,82 +1,58 @@
+from functools import cache
+
+import numpy as np
 import pandas as pd
 from brainspace.gradient import GradientMaps
-from tqdm import tqdm
 
-from gradecc.load_data.subject import SUBJECTS_INT
-from gradecc.compute.conn_mat import ConnectivityMatrix, ConnectivityMatrixMean
-from gradecc.load_data import Timeseries
-
-NUM_COMPONENTS = 4
-SPARSITY = 0.9
-
-
-# can be a class variable, also not a semantically global var. what is it?
+from gradecc.compute.conn_mat import ConnectivityMatrix, riemann_centered_conn_mat
+from gradecc.compute.conn_mat.center import mean_riemann_conn_mats
+from gradecc.compute.conn_mat.conn_mat import stack_conn_mats
+from gradecc.load_data import Subject, Timeseries, EPOCHS
+from gradecc.load_data import EPOCH_REF
+from gradecc.load_data.subject import SUBJECTS
 
 
-def make_gradients(epoch_list=None, subjects=SUBJECTS_INT,
-                   num_components=NUM_COMPONENTS,
-                   reference_epoch='baseline',  # todo change to `rest`
-                   ) -> pd.DataFrame:
-    if epoch_list is None:
-        epoch_list = ['baseline', 'early', 'late']
+class Gradients(GradientMaps):
+    def __init__(self, subject: Subject, epoch_list: list[str] = EPOCHS, epoch_ref=EPOCH_REF,
+                 n_components=4, approach='pca', alignment='procrustes', random_state=0, sparsity=0.9, **kwargs):
 
-    gradient_reference = _make_reference_gradient(reference_epoch)
+        super(Gradients, self).__init__(n_components, approach, None, alignment, random_state)
 
-    df = pd.DataFrame()
-    print('Computing gradients for subjects...')
-    for subject in tqdm(subjects):
-        subject_gradient_model = _make_subject_gradient_model(subject=subject, epoch_list=epoch_list,
-                                                              gradient_reference=gradient_reference,
-                                                              dim_reduction_approach='pca')
-        for epoch in epoch_list:
-            for component in range(num_components):
-                df_subject = _make_df_for_subject(subject, subject_gradient_model,
-                                                  component, epoch, epoch_list)
-                df = pd.concat([df, df_subject], axis=0)
-    return df
+        self.subject = subject
+        self.epoch_list = epoch_list
+        self.sparsity = sparsity
+        cnt = kwargs.get('centered', False)
+        self.conn_mats = [ConnectivityMatrix(Timeseries(self.subject, e), centered=cnt) for e in self.epoch_list]
+        self.region_names = self.conn_mats[0].region_names
+        self.grads_ref = None if epoch_ref is None else ref_grad_model(epoch_ref, centered=cnt).gradients_
 
+        self.fit_()
+        self.df = self.make_df()
 
-def _make_df_for_subject(subject, subject_gradient_model, component, epoch, epoch_list):
-    subject_gradients = subject_gradient_model.aligned_[epoch_list.index(epoch)][:, component]
+    def fit_(self, gamma=None, n_iter=10):
+        x = self.conn_mats
+        return super(Gradients, self).fit(x, gamma, self.sparsity, n_iter, reference=self.grads_ref)
 
-    ts = Timeseries(epoch=epoch, subject_id=subject)
-    conn_mat = ConnectivityMatrix(timeseries=ts)
-    conn_mat.load()
-
-    df_part = pd.DataFrame(subject_gradients, columns=['value'])
-    df_part['region'] = conn_mat.region_names
-    df_part['subject'] = subject
-    df_part['epoch'] = epoch
-    df_part['measure'] = 'gradient' + str(component + 1)
-    return df_part
+    def make_df(self):
+        df_ = pd.DataFrame()
+        for epoch in self.epoch_list:
+            for component in range(self.n_components):
+                values = self.aligned_[self.epoch_list.index(epoch)][:, component]
+                df = pd.DataFrame({'subject': self.subject.int, 'epoch': epoch, 'region': self.region_names,
+                                   'measure': 'gradient' + str(component + 1),  'value': values})
+                df_ = pd.concat([df_, df], axis=0)
+        return df_
 
 
-def _make_subject_gradient_model(subject, epoch_list, gradient_reference: GradientMaps,
-                                 dim_reduction_approach='pca'):
-    """ if ref is None, takes the first as ref
-    """
-    gradient_model = GradientMaps(random_state=0, alignment="procrustes",
-                                  approach=dim_reduction_approach)
+@cache
+def ref_grad_model(epoch_ref=EPOCH_REF, subjects=SUBJECTS, n_components=4, approach='pca',
+                   random_state=0, sparsity=0.9, **kwargs):
+    # we assume to compute gradient on euclidean mean not riemann mean
+    # todo coupled to conn mat module
+    if kwargs.get('centered', False):   cmat_mean_ref = mean_riemann_conn_mats(np.stack(
+        [riemann_centered_conn_mat(Timeseries(s, epoch_ref)) for s in subjects]))
+    else:   cmat_mean_ref = stack_conn_mats(epochs=epoch_ref, subjects=subjects).mean(axis=0)
 
-    conn_mat_epochs = []
-    for epoch in epoch_list:
-        ts = Timeseries(epoch=epoch, subject_id=subject)
-        conn_mat = ConnectivityMatrix(timeseries=ts)
-        conn_mat.load()
-        conn_mat_epochs.append(conn_mat.data)
-
-    gradient_model.fit(conn_mat_epochs, sparsity=SPARSITY,
-                       reference=gradient_reference.gradients_)
-    return gradient_model
-
-
-# todo is it enough to reference grad model? or we need normalize conn mats?
-def _make_reference_gradient(reference_epoch, dim_reduction_approach='pca'):
-    # todo assume: compute gradient on conn mat mean not riemann mean
-    global_conn_mat = ConnectivityMatrixMean(epoch=reference_epoch)
-    global_conn_mat.load()
-    global_conn_mat = global_conn_mat.data
-
-    global_gradient_reference = GradientMaps(random_state=0, approach=dim_reduction_approach)
-    global_gradient_reference.fit(global_conn_mat, sparsity=SPARSITY)
-    return global_gradient_reference
+    grad_model_ref = GradientMaps(n_components=n_components, random_state=random_state, approach=approach)
+    grad_model_ref.fit(cmat_mean_ref, sparsity)
+    return grad_model_ref

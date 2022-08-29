@@ -21,14 +21,13 @@ def make_ttests(df, save: bool, between='epoch'):
     # todo bad smell. no need to involve seed conn when making ttests
     df_grouped, index = _prepare_for_seed_conn(df)
     print('Computing t-tests...')
-    df_stats_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between=between,
-                                                  subject='subject', padjust=FDR_method)
-    df_stats_pairwise = df_stats_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]
-    df_stats_pairwise = df_stats_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})
-    df_stats_pairwise = df_stats_pairwise.sort_index()
-    if save:
-        df_stats_pairwise.to_csv(ttests_filename)
-    return df_stats_pairwise
+    df_pairwise = df_grouped.progress_apply(pg.pairwise_ttests, dv='value', between=between,
+                                            subject='subject', padjust=FDR_method)
+    df_pairwise = df_pairwise.reset_index().set_index(index)[['region', 'T', 'p-corr']]
+    df_pairwise = df_pairwise.rename(columns={'p-corr': 'pvalue_corrected', 'T': 'tstat'})
+    df_pairwise = df_pairwise.sort_index()
+    if save:    df_pairwise.to_csv(ttests_filename)
+    return df_pairwise
 
 
 def _prepare_for_seed_conn(df):
@@ -36,9 +35,8 @@ def _prepare_for_seed_conn(df):
     if 'measure' in df.columns:
         df_grouped = df.groupby(['measure', 'region'])
         index = ['measure'] + index
-    else:
-        # means it's seed conn
-        df_grouped = df.groupby(['region'])
+    # else means it's seed conn pairs
+    else:   df_grouped = df.groupby(['region'])
     return df_grouped, index
 
 

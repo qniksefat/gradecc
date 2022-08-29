@@ -23,18 +23,20 @@ def plot_conn_mat(connectivity_matrix: typing.Union[ConnectivityMatrix, Connecti
 
 
 def _prep_conn_mat(connectivity_matrix, significant_regions):
-    connectivity_matrix.load()
     if isinstance(connectivity_matrix, ConnectivityMatrix):
         regions = connectivity_matrix.timeseries.region_names
+        conn_mat_ndarray = connectivity_matrix
     else:
         assert isinstance(connectivity_matrix, ConnectivityMatrixMean)
 
+        connectivity_matrix.load()
+        conn_mat_ndarray = connectivity_matrix.data
         sample_subject = connectivity_matrix.subjects[0]
-        assert (isinstance(sample_subject, int) or isinstance(sample_subject, str))
+        # assert isinstance(sample_subject, int) or isinstance(sample_subject, str)
         ts = Timeseries(sample_subject, epoch=connectivity_matrix.epoch)
         ts.load()
         regions = ts.region_names
-    conn_mat_ndarray = connectivity_matrix.data
+
     if significant_regions:
         conn_mat_ndarray, regions = _mask_conn_mat(conn_mat_ndarray, regions)
     return conn_mat_ndarray, regions

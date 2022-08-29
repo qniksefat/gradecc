@@ -5,7 +5,6 @@ import numpy as np
 from gradecc.plot.utils import ATLAS, _init_atlas
 from gradecc.plot._surfplot import _surf_plot
 from gradecc.stats.utils import ALPHA
-from gradecc.utils.filenames import labels_filename
 
 
 # todo cortex and subcortex
@@ -14,6 +13,7 @@ def plot_brain():
 
 
 def plot_cortex(data, value='value', mask=None, **kwargs):
+    # todo assert data.shape[0]== num of regions
     if mask is None:
         _plot_cortex(data, value, **kwargs)
     else:
@@ -49,20 +49,14 @@ def _handle_df_series(data, value):
 
 def _sort_regarding_regions(data, value):
     data = data.reset_index()
-    fname = labels_filename
-    region_index_map = pd.read_csv(fname)
-    # todo make class. should not load each time.
-
+    region_index_map = ATLAS['CORTEX_LABELS']
     data = data.merge(region_index_map, how='left', left_on='region', right_on='name_7networks')
     data = data.sort_values('index_7networks')
-    data = np.array(data[value])
-    return data
+    return np.array(data[value])
 
 
 # todo name plot significant
 def _plot_brain_masked(data, value: str, mask: str, **kwargs):
-    mask = data[mask]
-    value = data[value]
-    significance = np.array(mask) < kwargs.get('threshold', ALPHA)
-    data['plot_value'] = np.where(significance, np.array(value), 0)
+    significance = np.array(data[mask]) < kwargs.get('threshold', ALPHA)
+    data['plot_value'] = np.where(significance, np.array(data[value]), 0)
     _plot_cortex(data, 'plot_value', **kwargs)

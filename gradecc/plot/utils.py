@@ -3,7 +3,7 @@ import pandas as pd
 from brainspace.datasets import load_conte69
 
 from gradecc.load_data import all_region_names
-from gradecc.utils.filenames import atlas_filename
+from gradecc.utils.filenames import atlas_filename, labels_filename
 
 nib.imageglobals.logger.level = 40
 
@@ -21,6 +21,8 @@ def _init_atlas():
     if ATLAS == {}:
         ATLAS['left_surface'], ATLAS['right_surface'] = load_conte69()
         ATLAS['vertex_labels'], ATLAS['vertex_masked'] = load_atlas()
+
+        ATLAS['CORTEX_LABELS'] = pd.read_csv(labels_filename)
         # todo inflated brain maps
         """
         from neuromaps.datasets import fetch_fsaverage

@@ -18,7 +18,6 @@ def make_subject_id_mapping():
 _subject_id_mappings = make_subject_id_mapping()
 SUBJECT_ID_INT2STR: dict[int, str] = _subject_id_mappings[0]
 SUBJECT_ID_STR2INT: dict[str, int] = _subject_id_mappings[1]
-SUBJECTS_INT = list(SUBJECT_ID_INT2STR.keys())
 
 
 class Subject:
@@ -28,7 +27,8 @@ class Subject:
         assert isinstance(subject_id, str) or isinstance(subject_id, int)
         self.int = None
         self.str = None
-        self.adapt_format_subject_id()
+        try:    self.adapt_format_subject_id()
+        except KeyError:    print('No valid subject for', self._subject_id)
 
     def subject_id_is_int(self):
         return str(self._subject_id).isdigit()
@@ -40,6 +40,10 @@ class Subject:
         else:
             self.str = self._subject_id
             self.int = SUBJECT_ID_STR2INT[self.str]
+
+
+SUBJECTS_INT = list(SUBJECT_ID_INT2STR.keys())
+SUBJECTS = [Subject(s) for s in SUBJECT_ID_INT2STR.keys()]
 
 
 def includes_all_subjects(subjects: list[Subject]):

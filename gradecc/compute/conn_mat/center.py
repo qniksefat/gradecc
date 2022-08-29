@@ -1,18 +1,14 @@
 import numpy as np
 from pyriemann.utils.base import sqrtm, invsqrtm, logm, expm
 from pyriemann.utils.mean import mean_riemann
-from joblib import Memory
 
-from gradecc.compute.conn_mat.conn_mat import conn_mat_from_timeseries
+from gradecc.compute.conn_mat.conn_mat import conn_mat_from_timeseries, stack_conn_mats
 from gradecc.load_data import Subject, Timeseries
 from gradecc.load_data.subject import SUBJECTS
 from gradecc.load_data import EPOCHS
-from gradecc.utils.filenames import data_outside
+from gradecc.utils.filenames import memory
 
-memory = Memory(data_outside)
-MAX_ITER = 10
-
-# should be inside class. gets data gives centered data
+MAX_ITER_RIEMANN = 5
 
 
 def _to_tangent(s, mean):
@@ -34,7 +30,7 @@ def _from_tangent(t, grand_mean):
 
 
 def center_cmat(c, sub_mean, grand_mean):
-    """Center covariance matrix using tangent transporting procedure\
+    """Center covariance matrix using tangent transporting procedure
     https://github.com/danjgale/adaptation-manifolds/blob/main/adaptman/connectivity.py
 
     Parameters
@@ -57,27 +53,25 @@ def center_cmat(c, sub_mean, grand_mean):
 
 
 @memory.cache
-def mean_riemann_conn_mat(epochs, subjects) -> np.ndarray:
+def mean_riemann_conn_mats(conn_mats_stacked: np.ndarray) -> np.ndarray:
     """
-    you should modify any change (even position) in memory cached codes to func_code.py in memory dir.
-    @param epochs:
-    @param subjects:
+    You should modify any change (even position) in memory cached codes to func_code.py in memory dir.
+    @param conn_mats_stacked: shape num_matrices * num_regions*num_regions
     @return:
     """
-    if not isinstance(epochs, list):    epochs = [epochs]
-    if not isinstance(subjects, list):  subjects = [subjects]
-    conn_mats_epochs = np.stack([conn_mat_from_timeseries(Timeseries(s, e))
-                                 for e in epochs for s in subjects])
-    # mean_riemann takes long, so I cache it using joblib
-    return mean_riemann(conn_mats_epochs, maxiter=MAX_ITER)
+    assert conn_mats_stacked.shape[1] == conn_mats_stacked.shape[2]
+    # I made this method to cache output using joblib. mean_riemann takes long.
+    return mean_riemann(conn_mats_stacked, maxiter=MAX_ITER_RIEMANN)
 
 
+@memory.cache   # could make redundant files on disk
 def riemann_centered_conn_mat(timeseries: Timeseries) -> np.ndarray:
     conn_mat = conn_mat_from_timeseries(timeseries)
-    subject_mean = mean_riemann_conn_mat(EPOCHS, timeseries.subject)
-    grand_mean = mean_riemann_conn_mat(EPOCHS, SUBJECTS)
+    subject_mean = mean_riemann_conn_mats(stack_conn_mats(EPOCHS, timeseries.subject))
+    grand_mean = mean_riemann_conn_mats(stack_conn_mats(EPOCHS, SUBJECTS))
     return center_cmat(conn_mat, subject_mean, grand_mean)
 
 
 if __name__ == '__main__':
-    print(riemann_centered_conn_mat(Timeseries(Subject(6), 'baseline')))
+    c1 = riemann_centered_conn_mat(Timeseries(Subject(3), 'baseline'))
+    print(c1)

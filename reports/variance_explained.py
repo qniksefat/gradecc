@@ -30,14 +30,12 @@ def variance_explained(epoch_list=None, subjects=SUBJECTS_INT,
     subjects_lambdas_avg = np.array(subjects_lambdas).mean(axis=0) / num_comp_default
     variance = pd.DataFrame(subjects_lambdas_avg, index=epoch_list,
                             columns=list(np.arange(10)))
-    if cum_sum:
-        return _cum_sum(variance)
-    else:
-        return variance
+    if cum_sum: return _cum_sum(variance)
+    else:   return variance
 
 
 if __name__ == '__main__':
-    variance = variance_explained(epoch_list=None, cum_sum=False, reference_epoch='baseline')
+    variance = variance_explained(subjects=[1,2,3], epoch_list=None, cum_sum=False, reference_epoch='baseline')
 
     fig = sns.lineplot(y='value', x='variable', hue='index',
                        style='index', markers=True,
@@ -45,7 +43,7 @@ if __name__ == '__main__':
 
     fig = fig.get_figure()
 
-    fig.savefig(path.join(dir_images, 'variance_explained.png'))
+    fig.savefig(path.join(dir_images, 'var 123 cnt.png'))
 
 
 def _cum_sum(variance):

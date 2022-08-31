@@ -44,7 +44,7 @@ class Gradients(GradientMaps):
         return df_
 
 
-@cache
+# @cache
 def ref_grad_model(epoch_ref=EPOCH_REF, subjects=SUBJECTS, n_components=4, approach='pca',
                    random_state=0, sparsity=0.9, **kwargs):
     # we assume to compute gradient on euclidean mean not riemann mean

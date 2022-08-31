@@ -1,5 +1,3 @@
-import typing
-
 import pandas as pd
 
 from gradecc.load_data.subject import Subject
@@ -8,6 +6,9 @@ from gradecc.load_data.cortex import try_load_filenames
 from gradecc.load_data.subcortex import (_handle_if_subject_id,
                                          _make_subc_filename,
                                          _rename_columns_to_region_names)
+
+EPOCHS = ['baseline', 'early', 'late']
+EPOCH_REF = 'baseline'
 
 
 def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
@@ -18,22 +19,25 @@ def integrate_cortex_subcortex(ts_cortex, ts_subcortex):
 
 
 class Timeseries:
-    def __init__(self, subject_id: typing.Union[str, int], epoch: str, include_subcortex=True):
-        # todo q: where to define type? in params or when casting
-        self.subject = Subject(subject_id)
-        self.epoch: str = epoch
-        self.include_subcortex: bool = include_subcortex
-        self.data: pd.DataFrame = pd.DataFrame()
-        self.region_names = None
+    def __init__(self, subject: Subject, epoch: str, include_subcortex=True):
+        """ Everywhere in this package should pass subject then epoch. Subject is more fundamental semantically.
+        """
+        if isinstance(subject, int) or isinstance(subject, str):    self.subject = Subject(subject)
+        else:
+            assert isinstance(subject, Subject)
+            self.subject = subject
+        self.epoch = epoch
+        self.incl_subc = include_subcortex
+        self.data = None
+        self.region_names = []
     # todo feature: if epoch is `whole`, combine all
 
     def load(self):
-        if self.include_subcortex:
+        if self.incl_subc:
             ts_subcortex = self._load_ts_subc()
             ts_cortex = self._load_ts_cortex()
             self.data = integrate_cortex_subcortex(ts_cortex, ts_subcortex)
-        else:
-            self.data = self._load_ts_cortex()
+        else:   self.data = self._load_ts_cortex()
 
         self.region_names = self.data.columns.tolist()
 
@@ -49,7 +53,7 @@ class Timeseries:
         return window_timeseries(self.epoch, timeseries)
 
     def _load_ts_subc(self) -> pd.DataFrame:
-        """ loads timeseries for subcortical regions
+        """ Loads timeseries for subcortical regions
         """
         subject_filename = _make_subc_filename(self.subject.str, self.epoch)
         ts_subc = pd.read_csv(subject_filename)
@@ -62,6 +66,6 @@ class Timeseries:
 
 
 def all_region_names(include_subcortex=True) -> list:
-    ts = Timeseries(1, 'rest', include_subcortex)
+    ts = Timeseries(Subject(1), 'baseline', include_subcortex)
     ts.load()
     return ts.data.columns.tolist()

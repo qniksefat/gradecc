@@ -1,5 +1,4 @@
 from os import path
-
 from surfplot import Plot
 
 from gradecc.plot.utils import ATLAS
@@ -15,9 +14,9 @@ def _surf_plot(data, **kwargs):
                 as_outline=kwargs.get('as_outline', False),
                 color_range=kwargs.get('color_range', None))
     figure = p.build()
-    # figure.show()
-    if kwargs.get('save_figure', False):
-        _save_figure(figure, text)
+    output_filename = kwargs.get('output_filename', False)
+    if output_filename:  _save_figure(figure, output_filename)
+    elif kwargs.get('save_figure', False):    _save_figure(figure, text)
 
 
 def _save_figure(figure, text):
